@@ -20,6 +20,7 @@ WEIGHTS_DIR = Path(__file__).resolve().parent.parent / "weights"
 
 class Persistence:
     name = "persistence"
+    trainable = False
 
     def __init__(self, rain_col: str = "KSAC_prcp", heavy_col: str = "heavy_rain"):
         self.rain_col = rain_col
@@ -40,13 +41,13 @@ class Persistence:
     def save(self, directory: Path | None = None) -> Path:
         directory = Path(directory or WEIGHTS_DIR / self.name)
         directory.mkdir(parents=True, exist_ok=True)
-        (directory / "config.json").write_text(json.dumps(vars(self), indent=2))
+        (directory / "model.json").write_text(json.dumps(vars(self), indent=2))
         return directory
 
     @classmethod
     def load(cls, directory: Path | None = None) -> "Persistence":
         directory = Path(directory or WEIGHTS_DIR / cls.name)
-        return cls(**json.loads((directory / "config.json").read_text()))
+        return cls(**json.loads((directory / "model.json").read_text()))
 
     @staticmethod
     def _previous_day(df: pd.DataFrame, col: str) -> pd.Series:

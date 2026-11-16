@@ -20,6 +20,19 @@ weather-station data, and test whether a lightweight ML model beats persistence 
 | **Baselines** | Persistence (required), climatology, logistic regression; HRRR as optional professional reference |
 | **Metrics** | CSI (main), precision, hit rate, MAE; paired block-bootstrap 90% CI for the CSI difference |
 
+## Pipeline
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python scripts/dataset_downloader.py  # raw hourly station data -> data/raw_data/ (gitignored)
+.venv/bin/python scripts/data_report.py         # coverage + heavy-rain risk check
+.venv/bin/python scripts/data_preprocess.py     # clean daily table + train/val/test split
+.venv/bin/python scripts/hrrr_downloader.py     # HRRR forecasts (already in data/hrrr_daily.csv)
+.venv/bin/python train.py                       # fit models -> weights/<tag>/, results/<tag>/train.json
+.venv/bin/python evaluate.py --split val        # scores -> results/<tag>/metrics_<split>.json
+.venv/bin/python leaderboard.py                 # all configs, times, scores -> results/leaderboard.csv
+```
+
 ## Roles
 
 | # | Role | Owner | Owns |
@@ -32,30 +45,21 @@ weather-station data, and test whether a lightweight ML model beats persistence 
 
 ## To Do
 
-### 1. Data lead — due Mon Nov 16
-- [ ] Download hourly NOAA observations for Sacramento and the chosen nearby stations
-- [ ] Check coverage: missing hours, gaps, station changes, "trace" rainfall values
-- [ ] Build one clean table: one row per day, 24-hour rain totals, fixed day window (agreed with #4)
-- [ ] Count heavy-rain events per winter and share with the group (risk check)
-- [ ] Deliver clean shared CSV + event count
+### All
+- [ ] Risk check: only 2.2 heavy-rain days/winter at the 90th percentile (plan needs ~3). Decide: widen to Nov–Mar or add the 75th percentile (~5/winter)
 
-### 2. Modeling lead — due Fri Nov 20
-- [ ] Build input features from the previous 1–5 days using #4's feature list
-- [ ] Train logistic regression first, then random forest or gradient boosting
-- [ ] Tune on validation winters only — never touch test winters while tuning
-- [ ] Record training and prediction runtime (supports the low-cost pitch)
-- [ ] Deliver trained models + test-winter predictions
+### 2. Modeling lead
+- [ ] Tune model hyperparameters on validation winters only (train.py tunes only the heavy-rain cutoff so far)
+- [ ] Optional: gradient boosting model
 
-### 3. Evaluation lead — split/baselines Tue Nov 17, results Sat Nov 21
-- [ ] Fix and share the chronological 70/15/15 split by whole winters
-- [ ] Implement baselines: persistence, climatology, HRRR if time allows
-- [ ] Write one shared `evaluate()`: CSI, precision, hit rate, MAE, paired block-bootstrap 90% CI on CSI difference
-- [ ] Produce main result figures and tables
+### 3. Evaluation lead
+- [ ] Save test-winter predictions per day (needed for storm case studies)
+- [ ] Produce main result figures
 
-### 4. Meteorology lead — stations/features Sun Nov 15, case studies Mon Nov 23
-- [ ] Choose nearby/upwind stations (e.g. Sacramento Executive, Sacramento International, SFO, Oakland) and justify
-- [ ] Propose physical features: 24-h pressure change, wind direction, dew point, upstream rainfall
-- [ ] Agree heavy-rain definition and 24-hour day window with #1
+### 4. Meteorology lead — case studies Mon Nov 23
+- [ ] Justify stations: pipeline uses KSAC + KSFO; KSMF/KOAK dropped (almost no hourly rain before 2004)
+- [ ] Review the physical features in `models/features.py` (pressure, 24-h pressure change, wind u/v, dew point, upstream rain)
+- [ ] Confirm heavy-rain definition (wet day ≥ 1 mm) and day window (PST midnight–midnight) in `scripts/data_preprocess.py`
 - [ ] After results: case studies of 2–3 storms (caught and missed) explaining model success/failure
 
 ### 5. Science & report lead — lit review/skeleton Wed Nov 18, full draft Wed Nov 25
@@ -68,10 +72,8 @@ weather-station data, and test whether a lightweight ML model beats persistence 
 
 | Dates | Milestone | Lead |
 |-------|-----------|------|
-| Nov 13–15 | Kickoff; stations and features chosen; data download starts | All, #4, #1 |
-| Nov 16–17 | Clean data shared; event count checked; split and baselines locked | #1, #3 |
-| Nov 18–20 | Models trained; lit review and report skeleton ready | #2, #5 |
-| Nov 21–23 | Results with CIs; figures; storm case studies | #3, #4 |
+| Nov 18–20 | Lit review and report skeleton ready | #5 |
+| Nov 21–23 | Figures; storm case studies | #3, #4 |
 | Nov 24–25 | Full report draft (before Thanksgiving) | All |
 | Nov 26–28 | Light edits, slides, recording | #5 + all |
 | Nov 29 | Final check: page limit, PDF name, names/emails, code link | #5 |
@@ -109,6 +111,5 @@ Submission checklist:
 
 - One shared repo, one shared data file and split — everyone trains and tests on identical data
 - Check-ins after Tuesday and Thursday class, plus the group chat
-- **Risk check Mon Nov 16:** if fewer than ~3 heavy-rain days per winter, decide whether to widen to Nov–Mar or add a lower threshold (e.g. 75th percentile)
 - Keep brief notes on your own work for contribution statements
 - Raise blockers early in the group chat

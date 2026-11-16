@@ -26,6 +26,7 @@ FORECASTS = ROOT / "data" / "hrrr_daily.csv"
 
 class HRRR:
     name = "hrrr"
+    trainable = False
 
     def fit(self, df: pd.DataFrame) -> "HRRR":
         """Nothing to learn except the heavy-rain threshold (mm) from the training winters."""
@@ -45,12 +46,12 @@ class HRRR:
     def save(self, directory: Path | None = None) -> Path:
         directory = Path(directory or WEIGHTS_DIR / self.name)
         directory.mkdir(parents=True, exist_ok=True)
-        (directory / "config.json").write_text(json.dumps(vars(self), indent=2))
+        (directory / "model.json").write_text(json.dumps(vars(self), indent=2))
         return directory
 
     @classmethod
     def load(cls, directory: Path | None = None) -> "HRRR":
         directory = Path(directory or WEIGHTS_DIR / cls.name)
         model = cls()
-        model.__dict__.update(json.loads((directory / "config.json").read_text()))
+        model.__dict__.update(json.loads((directory / "model.json").read_text()))
         return model

@@ -63,14 +63,14 @@ class Climatology:
     def save(self, directory: Path | None = None) -> Path:
         directory = Path(directory or WEIGHTS_DIR / self.name)
         directory.mkdir(parents=True, exist_ok=True)
-        (directory / "config.json").write_text(json.dumps(vars(self), indent=2))
+        (directory / "model.json").write_text(json.dumps(vars(self), indent=2))
         return directory
 
     @classmethod
     def load(cls, directory: Path | None = None) -> "Climatology":
         directory = Path(directory or WEIGHTS_DIR / cls.name)
         model = cls()
-        model.__dict__.update(json.loads((directory / "config.json").read_text()))
+        model.__dict__.update(json.loads((directory / "model.json").read_text()))
         return model
 
     @staticmethod
