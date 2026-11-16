@@ -29,6 +29,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python scripts/data_preprocess.py     # clean daily table + train/val/test split
 .venv/bin/python scripts/hrrr_downloader.py     # HRRR forecasts (already in data/hrrr_daily.csv)
 .venv/bin/python train.py                       # fit models -> weights/<tag>/, results/<tag>/train.json
+.venv/bin/python train.py --grid                # grid search on val -> weights/<tag>_tuned/
 .venv/bin/python evaluate.py --split val        # scores -> results/<tag>/metrics_<split>.json
 .venv/bin/python leaderboard.py                 # all configs, times, scores -> results/leaderboard.csv
 ```
@@ -47,9 +48,6 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 ### All
 - [ ] Risk check: only 2.2 heavy-rain days/winter at the 90th percentile (plan needs ~3). Decide: widen to Nov–Mar or add the 75th percentile (~5/winter)
-
-### 2. Modeling lead
-- [ ] Tune model hyperparameters on validation winters only (train.py tunes only the heavy-rain cutoff so far)
 
 ### 3. Evaluation lead
 - [ ] Save test-winter predictions per day (needed for storm case studies)
