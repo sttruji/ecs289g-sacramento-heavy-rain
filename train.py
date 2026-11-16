@@ -72,8 +72,10 @@ def tune_cutoff(model, val: pd.DataFrame) -> float:
 
 
 def git_commit() -> str:
+    """Current commit, marked -dirty if tracked code (not results/ or weights/ outputs) has uncommitted changes."""
     git = lambda *args: subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True).stdout.strip()
-    return git("rev-parse", "--short", "HEAD") + ("-dirty" if git("status", "--porcelain", "--untracked-files=no") else "")
+    dirty = git("status", "--porcelain", "--untracked-files=no", "--", ".", ":(exclude)results", ":(exclude)weights")
+    return git("rev-parse", "--short", "HEAD") + ("-dirty" if dirty else "")
 
 
 def write_json(path: Path, data: dict) -> None:
