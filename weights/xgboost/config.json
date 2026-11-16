@@ -107,7 +107,7 @@
     ],
     "val_days": 602
   },
-  "git_commit": "f338bf1-dirty",
+  "git_commit": "c86f2db",
   "versions": {
     "python": "3.13.3",
     "numpy": "2.5.5",
@@ -115,5 +115,5 @@
     "scikit-learn": "1.9.1",
     "xgboost": "3.4.1"
   },
-  "trained_at": "2026-11-15T18:41:19"
+  "trained_at": "2026-11-15T18:41:56"
 }
