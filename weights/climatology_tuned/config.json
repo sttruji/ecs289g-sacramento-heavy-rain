@@ -1,0 +1,49 @@
+{
+  "tag": "climatology_tuned",
+  "model": "Climatology",
+  "trainable": true,
+  "epochs": null,
+  "hyperparameters": {
+    "rain_col": "KSAC_prcp",
+    "heavy_col": "heavy_rain",
+    "window_days": 15,
+    "threshold": null
+  },
+  "cutoff": 0.0311,
+  "cutoff_tuned_on": "val",
+  "grid_search": {
+    "grid": {
+      "window_days": [
+        15,
+        31,
+        61
+      ]
+    },
+    "selected": {
+      "window_days": 15
+    },
+    "selected_by": "highest val CSI",
+    "combinations": 3
+  },
+  "data": {
+    "train_winters": [
+      1973,
+      2011
+    ],
+    "train_days": 2925,
+    "val_winters": [
+      2012,
+      2018
+    ],
+    "val_days": 602
+  },
+  "git_commit": "054856c",
+  "versions": {
+    "python": "3.13.3",
+    "numpy": "2.5.5",
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1"
+  },
+  "trained_at": "2026-11-15T18:47:49"
+}

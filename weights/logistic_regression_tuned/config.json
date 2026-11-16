@@ -1,0 +1,85 @@
+{
+  "tag": "logistic_regression_tuned",
+  "model": "LogisticRegression",
+  "trainable": true,
+  "epochs": null,
+  "hyperparameters": {
+    "heavy_col": "heavy_rain",
+    "lags": 1,
+    "threshold": null,
+    "pipeline": {
+      "memory": null,
+      "transform_input": null,
+      "verbose": false,
+      "simpleimputer__add_indicator": false,
+      "simpleimputer__copy": true,
+      "simpleimputer__fill_value": null,
+      "simpleimputer__keep_empty_features": false,
+      "simpleimputer__missing_values": NaN,
+      "simpleimputer__strategy": "median",
+      "standardscaler__copy": true,
+      "standardscaler__with_mean": true,
+      "standardscaler__with_std": true,
+      "logisticregression__C": 1.0,
+      "logisticregression__class_weight": null,
+      "logisticregression__dual": false,
+      "logisticregression__fit_intercept": true,
+      "logisticregression__intercept_scaling": 1,
+      "logisticregression__l1_ratio": 0.0,
+      "logisticregression__max_iter": 1000,
+      "logisticregression__n_jobs": null,
+      "logisticregression__penalty": "deprecated",
+      "logisticregression__random_state": null,
+      "logisticregression__solver": "lbfgs",
+      "logisticregression__tol": 0.0001,
+      "logisticregression__verbose": 0,
+      "logisticregression__warm_start": false
+    }
+  },
+  "cutoff": 0.07606955417055133,
+  "cutoff_tuned_on": "val",
+  "grid_search": {
+    "grid": {
+      "C": [
+        0.001,
+        0.01,
+        0.1,
+        1.0,
+        10.0
+      ],
+      "lags": [
+        1,
+        2,
+        3,
+        5
+      ]
+    },
+    "selected": {
+      "C": 1.0,
+      "lags": 1
+    },
+    "selected_by": "highest val CSI",
+    "combinations": 20
+  },
+  "data": {
+    "train_winters": [
+      1973,
+      2011
+    ],
+    "train_days": 2925,
+    "val_winters": [
+      2012,
+      2018
+    ],
+    "val_days": 602
+  },
+  "git_commit": "054856c",
+  "versions": {
+    "python": "3.13.3",
+    "numpy": "2.5.5",
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1"
+  },
+  "trained_at": "2026-11-15T18:47:54"
+}
