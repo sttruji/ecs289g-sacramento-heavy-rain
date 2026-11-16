@@ -1,0 +1,29 @@
+{
+  "tag": "hrrr",
+  "model": "HRRR",
+  "trainable": false,
+  "epochs": null,
+  "hyperparameters": {},
+  "cutoff": 22.3,
+  "cutoff_tuned_on": null,
+  "data": {
+    "train_winters": [
+      1973,
+      2011
+    ],
+    "train_days": 2925,
+    "val_winters": [
+      2012,
+      2018
+    ],
+    "val_days": 602
+  },
+  "git_commit": "e83bae2",
+  "versions": {
+    "python": "3.13.3",
+    "numpy": "2.5.5",
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1"
+  },
+  "trained_at": "2026-11-15T18:37:37"
+}

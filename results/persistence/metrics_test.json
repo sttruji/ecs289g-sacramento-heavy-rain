@@ -1,0 +1,14 @@
+{
+  "split": "test",
+  "days": 549,
+  "heavy_days": 12,
+  "forecast_days": 528,
+  "hits": 0,
+  "misses": 11,
+  "false_alarms": 12,
+  "csi": 0.0,
+  "precision": 0.0,
+  "hit_rate": 0.0,
+  "mae": 3.1735,
+  "evaluated_at": "2026-11-15T18:37:43"
+}
