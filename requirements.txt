@@ -28,3 +28,4 @@ threadpoolctl==3.8.0
 tzdata==2026.6
 urllib3==2.8.0
 xarray==2026.9.0
+xgboost==3.4.1

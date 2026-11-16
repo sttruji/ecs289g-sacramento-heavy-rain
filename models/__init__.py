@@ -3,3 +3,4 @@ from models.hrrr import HRRR
 from models.logistic_regression import LogisticRegression
 from models.persistence import Persistence
 from models.random_forest import RandomForest
+from models.xgboost_model import XGBoost

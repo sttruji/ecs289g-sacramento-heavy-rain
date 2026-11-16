@@ -50,7 +50,6 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 ### 2. Modeling lead
 - [ ] Tune model hyperparameters on validation winters only (train.py tunes only the heavy-rain cutoff so far)
-- [ ] Optional: gradient boosting model
 
 ### 3. Evaluation lead
 - [ ] Save test-winter predictions per day (needed for storm case studies)

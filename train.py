@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 
 from evaluate import HEAVY, csi, load_split
-from models import HRRR, Climatology, LogisticRegression, Persistence, RandomForest
+from models import HRRR, Climatology, LogisticRegression, Persistence, RandomForest, XGBoost
 
 ROOT = Path(__file__).resolve().parent
 WEIGHTS_DIR = ROOT / "weights"
@@ -41,10 +41,11 @@ MODELS = {
     "climatology": Climatology,
     "logistic_regression": LogisticRegression,
     "random_forest": RandomForest,
+    "xgboost": XGBoost,
     "hrrr": HRRR,
 }
 
-PACKAGES = ["numpy", "pandas", "scikit-learn"]
+PACKAGES = ["numpy", "pandas", "scikit-learn", "xgboost"]
 
 
 def is_plain(value) -> bool:
