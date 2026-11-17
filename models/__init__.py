@@ -1,4 +1,6 @@
 from models.climatology import Climatology
+from models.gat import GAT
+from models.gru import GRU
 from models.hrrr import HRRR
 from models.logistic_regression import LogisticRegression
 from models.persistence import Persistence

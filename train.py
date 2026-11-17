@@ -35,7 +35,7 @@ import numpy as np
 import pandas as pd
 
 from evaluate import HEAVY, RAIN, csi, load_split
-from models import HRRR, Climatology, LogisticRegression, Persistence, RandomForest, XGBoost
+from models import GAT, GRU, HRRR, Climatology, LogisticRegression, Persistence, RandomForest, XGBoost
 from models.features import ALL_STATIONS
 
 ROOT = Path(__file__).resolve().parent
@@ -52,10 +52,13 @@ MODELS = {
     "logistic_regression": LogisticRegression,
     "random_forest": RandomForest,
     "xgboost": XGBoost,
+    "gru": GRU,
+    "gat": GAT,  # graph over all stations by design
     "hrrr": HRRR,
     "logistic_regression_all_stations": lambda: LogisticRegression(stations=ALL_STATIONS),
     "random_forest_all_stations": lambda: RandomForest(stations=ALL_STATIONS),
     "xgboost_all_stations": lambda: XGBoost(stations=ALL_STATIONS),
+    "gru_all_stations": lambda: GRU(stations=ALL_STATIONS),
 }
 
 # Hyperparameter grids for --grid (constructor arguments of each model)
@@ -64,9 +67,11 @@ GRIDS = {
     "logistic_regression": {"C": [0.001, 0.01, 0.1, 1.0, 10.0], "lags": [1, 2, 3, 5]},
     "random_forest": {"min_samples_leaf": [1, 5, 10, 20], "lags": [1, 3, 5]},
     "xgboost": {"max_depth": [2, 3, 5], "learning_rate": [0.03, 0.1], "n_estimators": [100, 300], "lags": [3, 5]},
+    "gru": {"hidden_size": [16, 32], "epochs": [20, 50, 100], "lags": [3, 5]},
+    "gat": {"hidden_size": [16, 32], "epochs": [20, 50, 100], "heads": [1, 2]},
 }
 
-PACKAGES = ["numpy", "pandas", "scikit-learn", "xgboost"]
+PACKAGES = ["numpy", "pandas", "scikit-learn", "xgboost", "torch"]
 
 
 def is_plain(value) -> bool:
