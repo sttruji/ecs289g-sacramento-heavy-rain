@@ -87,9 +87,15 @@ def hyperparameters(model) -> dict:
 
 
 def tune_cutoff(model, val: pd.DataFrame) -> float:
-    """Probability cutoff with the highest validation CSI (lowest cutoff on ties)."""
+    """Probability cutoff with the highest validation CSI (lowest cutoff on ties).
+
+    Cutoffs sit halfway between neighbouring validation probabilities, so float
+    noise in a repeated prediction (parallel random forests) cannot move a day
+    across the cutoff.
+    """
     proba = model.predict_proba(val)
-    candidates = np.unique(proba.dropna())
+    values = np.unique(proba.dropna())
+    candidates = np.append(0.0, (values[:-1] + values[1:]) / 2)
     scores = [csi(val[HEAVY], (proba >= c).astype(int)) for c in candidates]
     return float(candidates[int(np.nanargmax(scores))])
 
