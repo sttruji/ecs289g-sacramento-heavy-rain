@@ -6,6 +6,10 @@
   "hyperparameters": {
     "heavy_col": "heavy_rain",
     "lags": 1,
+    "stations": [
+      "KSAC",
+      "KSFO"
+    ],
     "threshold": null,
     "pipeline": {
       "memory": null,
@@ -20,7 +24,7 @@
       "standardscaler__copy": true,
       "standardscaler__with_mean": true,
       "standardscaler__with_std": true,
-      "logisticregression__C": 0.01,
+      "logisticregression__C": 1.0,
       "logisticregression__class_weight": null,
       "logisticregression__dual": false,
       "logisticregression__fit_intercept": true,
@@ -36,7 +40,7 @@
       "logisticregression__warm_start": false
     }
   },
-  "cutoff": 0.09165035904911012,
+  "cutoff": 0.08301964866447357,
   "cutoff_tuned_on": "val",
   "grid_search": {
     "grid": {
@@ -55,7 +59,7 @@
       ]
     },
     "selected": {
-      "C": 0.01,
+      "C": 1.0,
       "lags": 1
     },
     "selected_by": "highest val CSI",
@@ -73,7 +77,7 @@
     ],
     "val_days": 602
   },
-  "git_commit": "133e646",
+  "git_commit": "1af1fd0",
   "versions": {
     "python": "3.13.3",
     "numpy": "2.5.5",
@@ -81,5 +85,5 @@
     "scikit-learn": "1.9.1",
     "xgboost": "3.4.1"
   },
-  "trained_at": "2026-11-17T10:32:02"
+  "trained_at": "2026-11-17T10:45:15"
 }

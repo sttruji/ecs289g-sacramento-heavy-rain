@@ -7,6 +7,10 @@
     "rain_col": "KSAC_prcp",
     "heavy_col": "heavy_rain",
     "lags": 1,
+    "stations": [
+      "KSAC",
+      "KSFO"
+    ],
     "threshold": null,
     "classifier": {
       "bootstrap": true,
@@ -18,7 +22,7 @@
       "max_leaf_nodes": null,
       "max_samples": null,
       "min_impurity_decrease": 0.0,
-      "min_samples_leaf": 10,
+      "min_samples_leaf": 20,
       "min_samples_split": 2,
       "min_weight_fraction_leaf": 0.0,
       "monotonic_cst": null,
@@ -38,7 +42,7 @@
       "max_leaf_nodes": null,
       "max_samples": null,
       "min_impurity_decrease": 0.0,
-      "min_samples_leaf": 10,
+      "min_samples_leaf": 20,
       "min_samples_split": 2,
       "min_weight_fraction_leaf": 0.0,
       "monotonic_cst": null,
@@ -50,7 +54,7 @@
       "warm_start": false
     }
   },
-  "cutoff": 0.11957939986141639,
+  "cutoff": 0.09106750544028289,
   "cutoff_tuned_on": "val",
   "grid_search": {
     "grid": {
@@ -67,7 +71,7 @@
       ]
     },
     "selected": {
-      "min_samples_leaf": 10,
+      "min_samples_leaf": 20,
       "lags": 1
     },
     "selected_by": "highest val CSI",
@@ -85,7 +89,7 @@
     ],
     "val_days": 602
   },
-  "git_commit": "133e646",
+  "git_commit": "1af1fd0",
   "versions": {
     "python": "3.13.3",
     "numpy": "2.5.5",
@@ -93,5 +97,5 @@
     "scikit-learn": "1.9.1",
     "xgboost": "3.4.1"
   },
-  "trained_at": "2026-11-17T10:32:38"
+  "trained_at": "2026-11-17T10:45:38"
 }

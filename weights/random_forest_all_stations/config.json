@@ -1,0 +1,83 @@
+{
+  "tag": "random_forest_all_stations",
+  "model": "RandomForest",
+  "trainable": true,
+  "epochs": null,
+  "hyperparameters": {
+    "rain_col": "KSAC_prcp",
+    "heavy_col": "heavy_rain",
+    "lags": 5,
+    "stations": [
+      "KSAC",
+      "KSFO",
+      "KSCK",
+      "KSMX",
+      "KSJC"
+    ],
+    "threshold": null,
+    "classifier": {
+      "bootstrap": true,
+      "ccp_alpha": 0.0,
+      "class_weight": null,
+      "criterion": "gini",
+      "max_depth": null,
+      "max_features": "sqrt",
+      "max_leaf_nodes": null,
+      "max_samples": null,
+      "min_impurity_decrease": 0.0,
+      "min_samples_leaf": 5,
+      "min_samples_split": 2,
+      "min_weight_fraction_leaf": 0.0,
+      "monotonic_cst": null,
+      "n_estimators": 500,
+      "n_jobs": -1,
+      "oob_score": false,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
+    },
+    "regressor": {
+      "bootstrap": true,
+      "ccp_alpha": 0.0,
+      "criterion": "squared_error",
+      "max_depth": null,
+      "max_features": "sqrt",
+      "max_leaf_nodes": null,
+      "max_samples": null,
+      "min_impurity_decrease": 0.0,
+      "min_samples_leaf": 5,
+      "min_samples_split": 2,
+      "min_weight_fraction_leaf": 0.0,
+      "monotonic_cst": null,
+      "n_estimators": 500,
+      "n_jobs": -1,
+      "oob_score": false,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
+    }
+  },
+  "cutoff": 0.08884872496784263,
+  "cutoff_tuned_on": "val",
+  "data": {
+    "train_winters": [
+      1973,
+      2011
+    ],
+    "train_days": 2925,
+    "val_winters": [
+      2012,
+      2018
+    ],
+    "val_days": 602
+  },
+  "git_commit": "1af1fd0",
+  "versions": {
+    "python": "3.13.3",
+    "numpy": "2.5.5",
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1"
+  },
+  "trained_at": "2026-11-17T10:45:08"
+}

@@ -7,6 +7,10 @@
     "rain_col": "KSAC_prcp",
     "heavy_col": "heavy_rain",
     "lags": 5,
+    "stations": [
+      "KSAC",
+      "KSFO"
+    ],
     "threshold": null,
     "classifier": {
       "bootstrap": true,
@@ -50,7 +54,7 @@
       "warm_start": false
     }
   },
-  "cutoff": 0.08957028249528251,
+  "cutoff": 0.11194267313354009,
   "cutoff_tuned_on": "val",
   "data": {
     "train_winters": [
@@ -64,7 +68,7 @@
     ],
     "val_days": 602
   },
-  "git_commit": "133e646",
+  "git_commit": "1af1fd0",
   "versions": {
     "python": "3.13.3",
     "numpy": "2.5.5",
@@ -72,5 +76,5 @@
     "scikit-learn": "1.9.1",
     "xgboost": "3.4.1"
   },
-  "trained_at": "2026-11-17T10:31:52"
+  "trained_at": "2026-11-17T10:45:04"
 }
