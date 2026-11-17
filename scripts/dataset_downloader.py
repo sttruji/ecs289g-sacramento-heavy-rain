@@ -38,6 +38,10 @@ STATIONS = {
     "KSMF": "KSMF0",  # Sacramento International Airport
     "KSFO": "72494",  # San Francisco International Airport (upwind, coastal)
     "KOAK": "72493",  # Oakland International Airport (upwind, coastal)
+    "KSCK": "72492",  # Stockton Metropolitan Airport (Central Valley, south)
+    "KSJC": "KSJC0",  # San Jose International Airport (South Bay)
+    "KSMX": "72394",  # Santa Maria Public Airport (central coast, south)
+    "KEKA": "72594",  # Eureka, Woodley Island (north coast)
 }
 
 COLUMNS = ["temp", "rhum", "prcp", "pres", "wdir", "wspd", "wpgt"]
@@ -45,7 +49,7 @@ COLUMNS = ["temp", "rhum", "prcp", "pres", "wdir", "wspd", "wpgt"]
 # NOAA station observations; values from any other source (e.g. models) are dropped
 OBSERVATION_SOURCES = {"isd_lite", "ghcnh", "metar"}
 
-# First winter with hourly records at all four stations
+# First winter with hourly records (Eureka's Meteostat record only starts in 2005)
 FIRST_WINTER = 1973
 LOOKBACK_DAYS = 5
 
@@ -80,7 +84,8 @@ def download_station(station_id: str, first_winter: int, last_winter: int) -> pd
     years = [df for df in years if df is not None]
     if not years:
         return pd.DataFrame()
-    df = pd.concat(years)
+    # Some stations never report a variable (e.g. gusts); its columns come back empty
+    df = pd.concat(years).reindex(columns=[c for col in COLUMNS for c in (col, f"{col}_source")])
 
     obs = pd.DataFrame(index=df.index)
     for col in COLUMNS:

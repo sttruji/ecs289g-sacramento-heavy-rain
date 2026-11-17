@@ -6,8 +6,11 @@ values for each station in STATIONS:
     {ICAO}_prcp          24-hour rain total (mm), trace counted as 0
     {ICAO}_pres          mean sea-level pressure (hPa)
     {ICAO}_pres_change   last minus first pressure reading of the day (hPa)
+    {ICAO}_pres_range    highest minus lowest pressure reading of the day (hPa)
     {ICAO}_dwpt          mean dew point (degC)
     {ICAO}_temp          mean temperature (degC)
+    {ICAO}_temp_range    highest minus lowest temperature of the day (degC)
+    {ICAO}_wind_speed    mean wind speed, calm counted as 0 (km/h)
     {ICAO}_wind_u/v      mean wind vector, toward east/north (km/h)
 plus heavy_rain: 1 if the target station's rain total is at or above the
 training-period 90th percentile of wet-day totals.
@@ -76,8 +79,11 @@ def daily_station(icao: str) -> pd.DataFrame:
         "prcp": g["prcp"].sum(),
         "pres": g["pres"].mean(),
         "pres_change": g["pres"].last() - g["pres"].first(),
+        "pres_range": g["pres"].max() - g["pres"].min(),
         "dwpt": g["dwpt"].mean(),
         "temp": g["temp"].mean(),
+        "temp_range": g["temp"].max() - g["temp"].min(),
+        "wind_speed": g["wspd"].mean(),
         "wind_u": g["wind_u"].mean(),
         "wind_v": g["wind_v"].mean(),
     })
