@@ -1,7 +1,7 @@
 """
 Random forest for both outputs: the heavy-rain event and the 24-hour rain total.
 
-Inputs are the previous 1-5 days of every station variable (models/features.py);
+Inputs are the previous 1-5 days of the chosen stations' variables (models/features.py);
 missing lag days are left as NaN, which scikit-learn forests handle natively.
 A classifier gives predict_proba() / predict_heavy() and a regressor gives
 predict(). predict_heavy() flags days at or above the cutoff. By default the
@@ -18,7 +18,7 @@ import joblib
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-from models.features import LAGS, lag_features
+from models.features import LAGS, STATIONS, lag_features
 
 WEIGHTS_DIR = Path(__file__).resolve().parent.parent / "weights"
 SEED = 42
@@ -28,10 +28,12 @@ class RandomForest:
     name = "random_forest"
 
     def __init__(self, rain_col: str = "KSAC_prcp", heavy_col: str = "heavy_rain", lags: int = LAGS,
-                 n_estimators: int = 500, min_samples_leaf: int = 5, threshold: float | None = None):
+                 stations: list[str] = STATIONS, n_estimators: int = 500, min_samples_leaf: int = 5,
+                 threshold: float | None = None):
         self.rain_col = rain_col
         self.heavy_col = heavy_col
         self.lags = lags
+        self.stations = list(stations)
         self.threshold = threshold
         forest = dict(n_estimators=n_estimators, min_samples_leaf=min_samples_leaf,
                       max_features="sqrt", n_jobs=-1, random_state=SEED)
@@ -39,7 +41,7 @@ class RandomForest:
         self.regressor = RandomForestRegressor(**forest)
 
     def fit(self, df: pd.DataFrame) -> "RandomForest":
-        X = lag_features(df, self.lags)
+        X = lag_features(df, self.lags, self.stations)
         self.classifier.fit(X, df[self.heavy_col])
         self.regressor.fit(X, df[self.rain_col])
         self.cutoff = self.threshold if self.threshold is not None else float(df[self.heavy_col].mean())
@@ -47,11 +49,11 @@ class RandomForest:
 
     def predict(self, df: pd.DataFrame) -> pd.Series:
         """24-hour rain total (mm) for each day."""
-        return pd.Series(self.regressor.predict(lag_features(df, self.lags)), index=df.index)
+        return pd.Series(self.regressor.predict(lag_features(df, self.lags, self.stations)), index=df.index)
 
     def predict_proba(self, df: pd.DataFrame) -> pd.Series:
         """Heavy-rain probability for each day."""
-        return pd.Series(self.classifier.predict_proba(lag_features(df, self.lags))[:, 1], index=df.index)
+        return pd.Series(self.classifier.predict_proba(lag_features(df, self.lags, self.stations))[:, 1], index=df.index)
 
     def predict_heavy(self, df: pd.DataFrame) -> pd.Series:
         """Heavy-rain event (1/0) for each day."""

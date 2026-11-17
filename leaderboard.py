@@ -1,11 +1,12 @@
 """
 Compile every model's config, timings and scores into results/leaderboard.csv.
 
-One row per model tag: model class, epochs, cutoff, training and prediction
-times (results/<tag>/train.json), each evaluated split's scores
-(results/<tag>/metrics_<split>.json), and the exact hyperparameters
-(weights/<tag>/config.json). "n/a" marks values that do not apply, e.g. no
-training for persistence or HRRR, or no MAE for a model without rain amounts.
+One row per model tag: model class, stations used as features, epochs, cutoff,
+training and prediction times (results/<tag>/train.json), each evaluated
+split's scores (results/<tag>/metrics_<split>.json), and the exact
+hyperparameters (weights/<tag>/config.json). "n/a" marks values that do not
+apply, e.g. no station features or training for persistence and HRRR, or no
+MAE for a model without rain amounts.
 Empty cells mean that split has not been evaluated yet. Rows are not ranked.
 
 Usage:
@@ -34,9 +35,11 @@ def read_json(path: Path) -> dict:
 def model_row(tag: str) -> dict:
     config = read_json(WEIGHTS_DIR / tag / "config.json")
     timing = read_json(RESULTS_DIR / tag / "train.json")
+    stations = config["hyperparameters"].get("stations")
     row = {
         "tag": tag,
         "model": config["model"],
+        "stations": "+".join(stations) if stations else None,
         "trainable": config["trainable"],
         "epochs": config["epochs"],
         "cutoff": config["cutoff"],
@@ -57,7 +60,7 @@ def main() -> None:
     tags = sorted(p.parent.name for p in WEIGHTS_DIR.glob("*/config.json"))
     board = pd.DataFrame([model_row(tag) for tag in tags]).set_index("tag")
 
-    columns = ["model", "trainable", "epochs", "cutoff", "train_seconds", "predict_seconds"]
+    columns = ["model", "stations", "trainable", "epochs", "cutoff", "train_seconds", "predict_seconds"]
     columns += [f"{s}_{m}" for s in SPLITS for m in METRICS] + ["hyperparameters", "git_commit", "trained_at"]
     board = board.reindex(columns=columns).dropna(axis=1, how="all")
 

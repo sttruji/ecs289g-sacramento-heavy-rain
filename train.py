@@ -36,6 +36,7 @@ import pandas as pd
 
 from evaluate import HEAVY, RAIN, csi, load_split
 from models import HRRR, Climatology, LogisticRegression, Persistence, RandomForest, XGBoost
+from models.features import ALL_STATIONS
 
 ROOT = Path(__file__).resolve().parent
 WEIGHTS_DIR = ROOT / "weights"
@@ -43,6 +44,8 @@ RESULTS_DIR = ROOT / "results"
 
 # Tag -> model. Add variants under new tags, e.g.
 #     "random_forest_leaf10": lambda: RandomForest(min_samples_leaf=10),
+# The ML models use KSAC + KSFO by default; the _all_stations variants add the
+# optional nearby stations (not grid-searched: they look good on val but not test).
 MODELS = {
     "persistence": Persistence,
     "climatology": Climatology,
@@ -50,6 +53,9 @@ MODELS = {
     "random_forest": RandomForest,
     "xgboost": XGBoost,
     "hrrr": HRRR,
+    "logistic_regression_all_stations": lambda: LogisticRegression(stations=ALL_STATIONS),
+    "random_forest_all_stations": lambda: RandomForest(stations=ALL_STATIONS),
+    "xgboost_all_stations": lambda: XGBoost(stations=ALL_STATIONS),
 }
 
 # Hyperparameter grids for --grid (constructor arguments of each model)
@@ -64,6 +70,8 @@ PACKAGES = ["numpy", "pandas", "scikit-learn", "xgboost"]
 
 
 def is_plain(value) -> bool:
+    if isinstance(value, (list, tuple)):
+        return all(is_plain(v) for v in value)
     return value is None or isinstance(value, (bool, int, float, str))
 
 

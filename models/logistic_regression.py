@@ -1,7 +1,7 @@
 """
 Logistic regression for the heavy-rain event.
 
-Inputs are the previous 1-5 days of every station variable (models/features.py),
+Inputs are the previous 1-5 days of the chosen stations' variables (models/features.py),
 median-imputed where a lag day is missing, then standardized. predict_proba()
 returns the heavy-rain probability and predict_heavy() flags days at or above
 the cutoff. By default the cutoff is the training heavy-day rate, the same rule
@@ -21,7 +21,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from models.features import LAGS, lag_features
+from models.features import LAGS, STATIONS, lag_features
 
 WEIGHTS_DIR = Path(__file__).resolve().parent.parent / "weights"
 
@@ -29,10 +29,11 @@ WEIGHTS_DIR = Path(__file__).resolve().parent.parent / "weights"
 class LogisticRegression:
     name = "logistic_regression"
 
-    def __init__(self, heavy_col: str = "heavy_rain", lags: int = LAGS, C: float = 1.0,
-                 threshold: float | None = None):
+    def __init__(self, heavy_col: str = "heavy_rain", lags: int = LAGS, stations: list[str] = STATIONS,
+                 C: float = 1.0, threshold: float | None = None):
         self.heavy_col = heavy_col
         self.lags = lags
+        self.stations = list(stations)
         self.threshold = threshold
         self.pipeline = make_pipeline(
             SimpleImputer(strategy="median"),
@@ -41,13 +42,13 @@ class LogisticRegression:
         )
 
     def fit(self, df: pd.DataFrame) -> "LogisticRegression":
-        self.pipeline.fit(lag_features(df, self.lags), df[self.heavy_col])
+        self.pipeline.fit(lag_features(df, self.lags, self.stations), df[self.heavy_col])
         self.cutoff = self.threshold if self.threshold is not None else float(df[self.heavy_col].mean())
         return self
 
     def predict_proba(self, df: pd.DataFrame) -> pd.Series:
         """Heavy-rain probability for each day."""
-        return pd.Series(self.pipeline.predict_proba(lag_features(df, self.lags))[:, 1], index=df.index)
+        return pd.Series(self.pipeline.predict_proba(lag_features(df, self.lags, self.stations))[:, 1], index=df.index)
 
     def predict_heavy(self, df: pd.DataFrame) -> pd.Series:
         """Heavy-rain event (1/0) for each day."""
