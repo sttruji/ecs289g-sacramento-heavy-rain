@@ -16,7 +16,9 @@ plus heavy_rain: 1 if the target station's rain total is at or above the
 training-period 90th percentile of wet-day totals.
 
 A station-day counts only if every variable has at least MIN_HOURS of 24 hourly
-readings, and a day is dropped if any station fails. Winters left with fewer
+readings, and a day is dropped if any station in STATIONS fails. Stations in
+OPTIONAL_STATIONS never drop a day; their columns are blank on days they fail.
+Winters left with fewer
 than MIN_WINTER_DAYS days are dropped. Whole winters are then split
 chronologically 70/15/15, so the split is deterministic with no random seed.
 
@@ -42,6 +44,10 @@ RAW_DIR = DATA_DIR / "raw_data"
 # have almost no hourly rainfall before 2004; adding them drops ~30 winters.
 STATIONS = ["KSAC", "KSFO"]
 TARGET = "KSAC"
+
+# Nearby stations that add columns but never drop a day: their values are blank
+# on days they are not complete (e.g. KSJC before 2004). KEKA has no complete days.
+OPTIONAL_STATIONS = ["KSCK", "KSMX", "KSJC"]
 
 MIN_HOURS = 20
 MIN_WINTER_DAYS = 45
@@ -92,9 +98,11 @@ def daily_station(icao: str) -> pd.DataFrame:
     return daily[complete & winter_day].round(2).add_prefix(f"{icao}_")
 
 
-def build_daily(stations: list[str] = STATIONS) -> pd.DataFrame:
-    """Join stations on days they are all complete and drop sparse winters."""
+def build_daily(stations: list[str] = STATIONS, optional: list[str] = OPTIONAL_STATIONS) -> pd.DataFrame:
+    """Join stations on days they are all complete, add optional stations where complete, drop sparse winters."""
     df = pd.concat([daily_station(icao) for icao in stations], axis=1, join="inner")
+    for icao in optional:
+        df = df.join(daily_station(icao))
     df.insert(0, "winter", df.index.year - (df.index.month <= 2))
     days = df.groupby("winter").size()
     return df[df["winter"].isin(days.index[days >= MIN_WINTER_DAYS])]
@@ -126,6 +134,8 @@ def main() -> None:
 
     df.to_csv(DATA_DIR / "clean_daily.csv")
     print(f"{len(df):,} days, {df['winter'].nunique()} winters, stations {', '.join(STATIONS)} -> data/clean_daily.csv")
+    for icao in OPTIONAL_STATIONS:
+        print(f"  optional {icao}: complete on {df[f'{icao}_prcp'].notna().mean():.0%} of days, blank otherwise")
     print(f"Heavy rain: {TARGET} >= {threshold:.1f} mm (train {HEAVY_PERCENTILE}th percentile of wet days)")
 
     for name, folder in [("train", "train_data"), ("val", "train_data"), ("test", "test_data")]:

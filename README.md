@@ -54,7 +54,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 - [ ] Produce main result figures
 
 ### 4. Meteorology lead — case studies Mon Nov 23
-- [ ] Justify stations: pipeline uses KSAC + KSFO. Downloaded but not used yet: KSMF, KOAK, KSJC (complete days only from ~2004), KSCK (35 winters), KSMX (from 1998), KEKA (almost no data)
+- [ ] Justify stations: KSAC + KSFO required; KSCK, KSMX, KSJC optional (blank on days they are incomplete, mostly before ~2000). Downloaded but unused: KSMF, KOAK, KEKA (almost no data)
 - [ ] Review the physical features in `scripts/data_preprocess.py` (pressure, pressure change and range, wind u/v and speed, dew point, temperature and its range, upstream rain)
 - [ ] Confirm heavy-rain definition (wet day ≥ 1 mm) and day window (PST midnight–midnight) in `scripts/data_preprocess.py`
 - [ ] After results: case studies of 2–3 storms (caught and missed) explaining model success/failure

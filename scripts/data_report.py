@@ -60,8 +60,10 @@ def main() -> None:
     df = dp.build_daily()
     splits = dp.split_winters(df["winter"].unique())
     dropped = sorted(set(winters) - set(df["winter"]))
-    print(f"\n== 3. Clean table: stations {', '.join(dp.STATIONS)} ==")
+    print(f"\n== 3. Clean table: stations {', '.join(dp.STATIONS)}, optional {', '.join(dp.OPTIONAL_STATIONS)} ==")
     print(f"{len(df):,} days in {df['winter'].nunique()} winters. Dropped winters: {dropped}")
+    print("Optional stations, % of days complete: "
+          + ", ".join(f"{icao} {df[f'{icao}_prcp'].notna().mean():.0%}" for icao in dp.OPTIONAL_STATIONS))
     for name, ws in splits.items():
         print(f"  {name:5s} {ws[0]}-{ws[-1]} ({len(ws)} winters, {df['winter'].isin(ws).sum():,} days)")
 
