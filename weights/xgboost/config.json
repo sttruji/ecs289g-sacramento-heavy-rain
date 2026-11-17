@@ -93,7 +93,7 @@
       "verbosity": null
     }
   },
-  "cutoff": 0.08652043342590332,
+  "cutoff": 0.0673832818865776,
   "cutoff_tuned_on": "val",
   "data": {
     "train_winters": [
@@ -107,7 +107,7 @@
     ],
     "val_days": 602
   },
-  "git_commit": "c86f2db",
+  "git_commit": "133e646",
   "versions": {
     "python": "3.13.3",
     "numpy": "2.5.5",
@@ -115,5 +115,5 @@
     "scikit-learn": "1.9.1",
     "xgboost": "3.4.1"
   },
-  "trained_at": "2026-11-15T18:41:56"
+  "trained_at": "2026-11-17T10:31:54"
 }

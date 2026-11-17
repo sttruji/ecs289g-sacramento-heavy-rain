@@ -6,7 +6,7 @@
   "hyperparameters": {
     "rain_col": "KSAC_prcp",
     "heavy_col": "heavy_rain",
-    "lags": 5,
+    "lags": 3,
     "threshold": null,
     "classifier": {
       "objective": "binary:logistic",
@@ -31,13 +31,13 @@
       "max_cat_threshold": null,
       "max_cat_to_onehot": null,
       "max_delta_step": null,
-      "max_depth": 5,
+      "max_depth": 3,
       "max_leaves": null,
       "min_child_weight": null,
       "missing": NaN,
       "monotone_constraints": null,
       "multi_strategy": null,
-      "n_estimators": 100,
+      "n_estimators": 300,
       "n_jobs": -1,
       "num_parallel_tree": null,
       "random_state": 42,
@@ -73,13 +73,13 @@
       "max_cat_threshold": null,
       "max_cat_to_onehot": null,
       "max_delta_step": null,
-      "max_depth": 5,
+      "max_depth": 3,
       "max_leaves": null,
       "min_child_weight": null,
       "missing": NaN,
       "monotone_constraints": null,
       "multi_strategy": null,
-      "n_estimators": 100,
+      "n_estimators": 300,
       "n_jobs": -1,
       "num_parallel_tree": null,
       "random_state": 42,
@@ -93,7 +93,7 @@
       "verbosity": null
     }
   },
-  "cutoff": 0.07615132629871368,
+  "cutoff": 0.06537757068872452,
   "cutoff_tuned_on": "val",
   "grid_search": {
     "grid": {
@@ -116,10 +116,10 @@
       ]
     },
     "selected": {
-      "max_depth": 5,
+      "max_depth": 3,
       "learning_rate": 0.03,
-      "n_estimators": 100,
-      "lags": 5
+      "n_estimators": 300,
+      "lags": 3
     },
     "selected_by": "highest val CSI",
     "combinations": 24
@@ -136,7 +136,7 @@
     ],
     "val_days": 602
   },
-  "git_commit": "054856c",
+  "git_commit": "133e646",
   "versions": {
     "python": "3.13.3",
     "numpy": "2.5.5",
@@ -144,5 +144,5 @@
     "scikit-learn": "1.9.1",
     "xgboost": "3.4.1"
   },
-  "trained_at": "2026-11-15T18:48:45"
+  "trained_at": "2026-11-17T10:33:11"
 }

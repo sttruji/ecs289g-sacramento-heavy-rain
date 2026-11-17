@@ -36,7 +36,7 @@
       "logisticregression__warm_start": false
     }
   },
-  "cutoff": 0.11760688550193761,
+  "cutoff": 0.1228351804591501,
   "cutoff_tuned_on": "val",
   "data": {
     "train_winters": [
@@ -50,12 +50,13 @@
     ],
     "val_days": 602
   },
-  "git_commit": "e83bae2",
+  "git_commit": "133e646",
   "versions": {
     "python": "3.13.3",
     "numpy": "2.5.5",
     "pandas": "3.1.1",
-    "scikit-learn": "1.9.1"
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1"
   },
-  "trained_at": "2026-11-15T18:37:34"
+  "trained_at": "2026-11-17T10:31:49"
 }

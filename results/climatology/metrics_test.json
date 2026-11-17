@@ -9,9 +9,9 @@
   "csi": 0.0143,
   "precision": 0.0154,
   "hit_rate": 0.1667,
-  "mae": 3.7206,
+  "mae": 3.709,
   "csi_diff_vs_persistence": 0.0147,
   "csi_diff_ci90_low": 0.0,
   "csi_diff_ci90_high": 0.0308,
-  "evaluated_at": "2026-11-15T18:37:42"
+  "evaluated_at": "2026-11-17T10:33:20"
 }

@@ -5,13 +5,13 @@
   "forecast_days": 602,
   "hits": 6,
   "misses": 16,
-  "false_alarms": 14,
-  "csi": 0.1667,
-  "precision": 0.3,
+  "false_alarms": 7,
+  "csi": 0.2069,
+  "precision": 0.4615,
   "hit_rate": 0.2727,
-  "mae": 3.185,
-  "csi_diff_vs_persistence": 0.1521,
-  "csi_diff_ci90_low": 0.0278,
-  "csi_diff_ci90_high": 0.3096,
-  "evaluated_at": "2026-11-15T18:41:58"
+  "mae": 3.2725,
+  "csi_diff_vs_persistence": 0.1978,
+  "csi_diff_ci90_low": 0.0946,
+  "csi_diff_ci90_high": 0.3448,
+  "evaluated_at": "2026-11-17T10:33:17"
 }
