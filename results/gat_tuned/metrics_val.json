@@ -1,0 +1,17 @@
+{
+  "split": "val",
+  "days": 602,
+  "heavy_days": 22,
+  "forecast_days": 602,
+  "hits": 13,
+  "misses": 9,
+  "false_alarms": 29,
+  "csi": 0.2549,
+  "precision": 0.3095,
+  "hit_rate": 0.5909,
+  "mae": 2.6534,
+  "csi_diff_vs_persistence": 0.2409,
+  "csi_diff_ci90_low": 0.1358,
+  "csi_diff_ci90_high": 0.3329,
+  "evaluated_at": "2026-11-17T12:14:46"
+}
