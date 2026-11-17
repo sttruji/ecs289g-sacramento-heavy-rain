@@ -31,8 +31,30 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python train.py                       # fit models -> weights/<tag>/, results/<tag>/train.json
 .venv/bin/python train.py --grid                # grid search on val -> weights/<tag>_tuned/
 .venv/bin/python evaluate.py --split val        # scores -> results/<tag>/metrics_<split>.json
+.venv/bin/python evaluate.py --split test       # final scores on the test winters
 .venv/bin/python leaderboard.py                 # all configs, times, scores -> results/leaderboard.csv
 ```
+
+## Stations
+
+| ICAO | Station | Use |
+|------|---------|-----|
+| KSAC | Sacramento Executive Airport (target) | Required: a day is kept only if KSAC and KSFO are both complete |
+| KSFO | San Francisco International Airport | Required |
+| KSCK | Stockton Metropolitan Airport | Optional: in the data (blank on incomplete days), used only by `*_all_stations` models |
+| KSMX | Santa Maria Public Airport | Optional, same as KSCK |
+| KSJC | San Jose International Airport | Optional, same as KSCK |
+| KSMF | Sacramento International Airport | Downloaded, unused: almost no hourly rain before 2004 |
+| KOAK | Oakland International Airport | Downloaded, unused: same as KSMF |
+| KEKA | Eureka, Woodley Island | Downloaded, unused: record starts 2005 and has no complete days |
+
+The ML models use KSAC + KSFO by default; the `*_all_stations` variants add KSCK, KSMX and KSJC
+and so far score lower on test. Each model's stations are in `weights/<tag>/config.json` and the
+leaderboard's `stations` column.
+
+`data/weather_data.nc` is Lucas's separate daily dataset (raw NOAA ISD, 6 stations, Jan 1973–Feb 2025).
+It is **not wired into the pipeline**: no script reads it. Its rain (`precip_total`) is 0 instead of blank
+at every station before winters 1996–1998 (Eureka ~2001), so its rain is unusable for those years.
 
 ## Roles
 
@@ -54,7 +76,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 - [ ] Produce main result figures
 
 ### 4. Meteorology lead — case studies Mon Nov 23
-- [ ] Justify stations: KSAC + KSFO required; KSCK, KSMX, KSJC optional (blank on days they are incomplete, mostly before ~2000). Downloaded but unused: KSMF, KOAK, KEKA (almost no data)
+- [ ] Justify the station choices in the Stations table above
 - [ ] Review the physical features in `scripts/data_preprocess.py` (pressure, pressure change and range, wind u/v and speed, dew point, temperature and its range, upstream rain)
 - [ ] Confirm heavy-rain definition (wet day ≥ 1 mm) and day window (PST midnight–midnight) in `scripts/data_preprocess.py`
 - [ ] After results: case studies of 2–3 storms (caught and missed) explaining model success/failure
