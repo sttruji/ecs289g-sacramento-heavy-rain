@@ -1,5 +1,5 @@
 """
-Shared data preparation and training for the PyTorch models (models/gru.py, models/gat.py).
+Shared data preparation and training for the PyTorch models (models/gru.py, models/gat.py, models/vae.py).
 
 Each day's input is the previous `lags` days of every chosen station's daily
 variables, shaped (stations, lags, variables) with the oldest day first. Each
@@ -56,7 +56,7 @@ class NeuralModel:
         self.threshold = threshold
 
     def network(self, n_stations: int, n_variables: int) -> torch.nn.Module:
-        """The network: forward(x, present) -> (heavy-rain logits, log(1 + rain mm))."""
+        """The network: forward(x, present) -> (heavy-rain logits, log(1 + rain mm), anything loss() needs)."""
         raise NotImplementedError
 
     def _array(self, df: pd.DataFrame) -> np.ndarray:
@@ -71,6 +71,17 @@ class NeuralModel:
         X = np.nan_to_num((X - self.mean) / self.std)
         return torch.from_numpy(X), torch.from_numpy(present)
 
+    def _targets(self, df: pd.DataFrame) -> dict[str, torch.Tensor]:
+        """Training targets, one row per day."""
+        return {"heavy": torch.from_numpy(df[self.heavy_col].to_numpy(np.float32)),
+                "rain": torch.from_numpy(np.log1p(df[self.rain_col].to_numpy(np.float32)))}
+
+    def loss(self, outputs: tuple, targets: dict[str, torch.Tensor], epoch: int) -> torch.Tensor:
+        """Weighted binary cross-entropy on the heavy-rain logit plus squared error on log(1 + rain mm)."""
+        heavy, rain = outputs[:2]
+        return (F.binary_cross_entropy_with_logits(heavy, targets["heavy"], pos_weight=self.pos_weight)
+                + F.mse_loss(rain, targets["rain"]))
+
     def fit(self, df: pd.DataFrame) -> "NeuralModel":
         torch.manual_seed(SEED)
         first = self.stations[0]
@@ -81,19 +92,17 @@ class NeuralModel:
         self.std = np.where(std > 0, std, 1).astype(np.float32)
 
         X, present = self._inputs(df)
-        y_heavy = torch.from_numpy(df[self.heavy_col].to_numpy(np.float32))
-        y_rain = torch.from_numpy(np.log1p(df[self.rain_col].to_numpy(np.float32)))
-        pos_weight = (1 - y_heavy.mean()) / y_heavy.mean()
+        targets = self._targets(df)
+        self.pos_weight = (1 - targets["heavy"].mean()) / targets["heavy"].mean()
 
         self.net = self.network(len(self.stations), len(self.variables))
         optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
         order = torch.Generator().manual_seed(SEED)
         self.net.train()
-        for _ in range(self.epochs):
+        for epoch in range(self.epochs):
             for batch in torch.randperm(len(X), generator=order).split(self.batch_size):
-                heavy, rain = self.net(X[batch], present[batch])
-                loss = (F.binary_cross_entropy_with_logits(heavy, y_heavy[batch], pos_weight=pos_weight)
-                        + F.mse_loss(rain, y_rain[batch]))
+                outputs = self.net(X[batch], present[batch])
+                loss = self.loss(outputs, {name: target[batch] for name, target in targets.items()}, epoch)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()

@@ -35,7 +35,7 @@ import numpy as np
 import pandas as pd
 
 from evaluate import HEAVY, RAIN, csi, load_split
-from models import GAT, GRU, HRRR, Climatology, LogisticRegression, Persistence, RandomForest, XGBoost
+from models import GAT, GRU, HRRR, VAE, Climatology, LogisticRegression, Persistence, RandomForest, XGBoost
 from models.features import ALL_STATIONS
 
 ROOT = Path(__file__).resolve().parent
@@ -54,6 +54,8 @@ MODELS = {
     "xgboost": XGBoost,
     "gru": GRU,
     "gat": GAT,  # graph over all stations by design
+    "vae": VAE,  # decoder rebuilds the lag window
+    "vae_today": lambda **kwargs: VAE(decode="today", **kwargs),  # decoder predicts the forecast day's weather
     "hrrr": HRRR,
     "logistic_regression_all_stations": lambda: LogisticRegression(stations=ALL_STATIONS),
     "random_forest_all_stations": lambda: RandomForest(stations=ALL_STATIONS),
@@ -69,6 +71,8 @@ GRIDS = {
     "xgboost": {"max_depth": [2, 3, 5], "learning_rate": [0.03, 0.1], "n_estimators": [100, 300], "lags": [3, 5]},
     "gru": {"hidden_size": [16, 32], "epochs": [20, 50, 100], "lags": [3, 5]},
     "gat": {"hidden_size": [16, 32], "epochs": [20, 50, 100], "heads": [1, 2]},
+    "vae": {"recon_weight": [0.0, 0.1, 1.0], "kl_weight": [0.0, 0.01, 0.1], "epochs": [20, 50]},
+    "vae_today": {"recon_weight": [0.0, 0.1, 1.0], "kl_weight": [0.0, 0.01, 0.1], "epochs": [20, 50]},
 }
 
 PACKAGES = ["numpy", "pandas", "scikit-learn", "xgboost", "torch"]
