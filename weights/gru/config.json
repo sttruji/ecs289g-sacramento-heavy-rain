@@ -2,7 +2,7 @@
   "tag": "gru",
   "model": "GRU",
   "trainable": true,
-  "epochs": 50,
+  "epochs": 7,
   "hyperparameters": {
     "rain_col": "KSAC_prcp",
     "heavy_col": "heavy_rain",
@@ -13,13 +13,14 @@
     ],
     "hidden_size": 32,
     "dropout": 0.2,
-    "epochs": 50,
+    "epochs": 200,
+    "patience": 10,
     "learning_rate": 0.001,
     "weight_decay": 0.0001,
     "batch_size": 64,
     "threshold": null
   },
-  "cutoff": 0.6556490957736969,
+  "cutoff": 0.778800755739212,
   "cutoff_tuned_on": "val",
   "data": {
     "train_winters": [
@@ -33,7 +34,7 @@
     ],
     "val_days": 602
   },
-  "git_commit": "21b69d1",
+  "git_commit": "c5d8d18",
   "versions": {
     "python": "3.13.3",
     "numpy": "2.5.5",
@@ -42,5 +43,5 @@
     "xgboost": "3.4.1",
     "torch": "2.15.0"
   },
-  "trained_at": "2026-11-17T12:13:13"
+  "trained_at": "2026-11-18T10:44:01"
 }

@@ -2,7 +2,7 @@
   "tag": "gat_tuned",
   "model": "GAT",
   "trainable": true,
-  "epochs": 20,
+  "epochs": 13,
   "hyperparameters": {
     "rain_col": "KSAC_prcp",
     "heavy_col": "heavy_rain",
@@ -14,16 +14,17 @@
       "KSMX",
       "KSJC"
     ],
-    "hidden_size": 32,
+    "hidden_size": 16,
     "dropout": 0.2,
-    "epochs": 20,
+    "epochs": 200,
+    "patience": 10,
     "learning_rate": 0.001,
     "weight_decay": 0.0001,
     "batch_size": 64,
     "threshold": null,
-    "heads": 2
+    "heads": 1
   },
-  "cutoff": 0.7800924479961395,
+  "cutoff": 0.7549620866775513,
   "cutoff_tuned_on": "val",
   "grid_search": {
     "grid": {
@@ -31,23 +32,17 @@
         16,
         32
       ],
-      "epochs": [
-        20,
-        50,
-        100
-      ],
       "heads": [
         1,
         2
       ]
     },
     "selected": {
-      "hidden_size": 32,
-      "epochs": 20,
-      "heads": 2
+      "hidden_size": 16,
+      "heads": 1
     },
     "selected_by": "highest val CSI",
-    "combinations": 12
+    "combinations": 4
   },
   "data": {
     "train_winters": [
@@ -61,7 +56,7 @@
     ],
     "val_days": 602
   },
-  "git_commit": "21b69d1",
+  "git_commit": "c5d8d18",
   "versions": {
     "python": "3.13.3",
     "numpy": "2.5.5",
@@ -70,5 +65,5 @@
     "xgboost": "3.4.1",
     "torch": "2.15.0"
   },
-  "trained_at": "2026-11-17T12:14:41"
+  "trained_at": "2026-11-18T10:44:19"
 }

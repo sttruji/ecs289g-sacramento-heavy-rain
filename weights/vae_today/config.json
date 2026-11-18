@@ -2,7 +2,7 @@
   "tag": "vae_today",
   "model": "VAE",
   "trainable": true,
-  "epochs": 50,
+  "epochs": 8,
   "hyperparameters": {
     "rain_col": "KSAC_prcp",
     "heavy_col": "heavy_rain",
@@ -13,7 +13,8 @@
     ],
     "hidden_size": 32,
     "dropout": 0.2,
-    "epochs": 50,
+    "epochs": 200,
+    "patience": 10,
     "learning_rate": 0.001,
     "weight_decay": 0.0001,
     "batch_size": 64,
@@ -23,7 +24,7 @@
     "recon_weight": 1.0,
     "kl_weight": 0.01
   },
-  "cutoff": 0.8456152975559235,
+  "cutoff": 0.8336130380630493,
   "cutoff_tuned_on": "val",
   "data": {
     "train_winters": [
@@ -37,7 +38,7 @@
     ],
     "val_days": 602
   },
-  "git_commit": "43bf65e",
+  "git_commit": "c5d8d18",
   "versions": {
     "python": "3.13.3",
     "numpy": "2.5.5",
@@ -46,5 +47,5 @@
     "xgboost": "3.4.1",
     "torch": "2.15.0"
   },
-  "trained_at": "2026-11-18T10:34:30"
+  "trained_at": "2026-11-18T10:44:05"
 }
