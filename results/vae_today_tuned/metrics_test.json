@@ -1,0 +1,17 @@
+{
+  "split": "test",
+  "days": 549,
+  "heavy_days": 12,
+  "forecast_days": 549,
+  "hits": 8,
+  "misses": 4,
+  "false_alarms": 26,
+  "csi": 0.2105,
+  "precision": 0.2353,
+  "hit_rate": 0.6667,
+  "mae": 2.1791,
+  "csi_diff_vs_persistence": 0.2162,
+  "csi_diff_ci90_low": 0.1316,
+  "csi_diff_ci90_high": 0.3448,
+  "evaluated_at": "2026-11-18T10:35:55"
+}
