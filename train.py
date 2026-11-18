@@ -2,7 +2,8 @@
 Train every model on the training winters and save weights, config and timings.
 
 For each model tag in MODELS this:
-    1. fits on the training winters and times it
+    1. fits on the training winters and times it (the neural models stop
+       early on their val loss, see models/neural.py)
     2. tunes the heavy-rain cutoff to maximize CSI on the validation winters
        (models with a heavy-rain probability only; the plan tunes on validation only)
     3. times prediction on the validation winters
@@ -37,6 +38,7 @@ import pandas as pd
 from evaluate import HEAVY, RAIN, csi, load_split
 from models import GAT, GRU, HRRR, VAE, Climatology, LogisticRegression, Persistence, RandomForest, XGBoost
 from models.features import ALL_STATIONS
+from models.neural import NeuralModel
 
 ROOT = Path(__file__).resolve().parent
 WEIGHTS_DIR = ROOT / "weights"
@@ -69,10 +71,11 @@ GRIDS = {
     "logistic_regression": {"C": [0.001, 0.01, 0.1, 1.0, 10.0], "lags": [1, 2, 3, 5]},
     "random_forest": {"min_samples_leaf": [1, 5, 10, 20], "lags": [1, 3, 5]},
     "xgboost": {"max_depth": [2, 3, 5], "learning_rate": [0.03, 0.1], "n_estimators": [100, 300], "lags": [3, 5]},
-    "gru": {"hidden_size": [16, 32], "epochs": [20, 50, 100], "lags": [3, 5]},
-    "gat": {"hidden_size": [16, 32], "epochs": [20, 50, 100], "heads": [1, 2]},
-    "vae": {"recon_weight": [0.0, 0.1, 1.0], "kl_weight": [0.0, 0.01, 0.1], "epochs": [20, 50]},
-    "vae_today": {"recon_weight": [0.0, 0.1, 1.0], "kl_weight": [0.0, 0.01, 0.1], "epochs": [20, 50]},
+    # The neural models pick their epochs by early stopping, so their grids leave epochs out
+    "gru": {"hidden_size": [16, 32], "lags": [3, 5]},
+    "gat": {"hidden_size": [16, 32], "heads": [1, 2]},
+    "vae": {"recon_weight": [0.0, 0.1, 1.0], "kl_weight": [0.0, 0.01, 0.1]},
+    "vae_today": {"recon_weight": [0.0, 0.1, 1.0], "kl_weight": [0.0, 0.01, 0.1]},
 }
 
 PACKAGES = ["numpy", "pandas", "scikit-learn", "xgboost", "torch"]
@@ -124,7 +127,10 @@ def write_json(path: Path, data: dict) -> None:
 def fit(model, train_df: pd.DataFrame, val: pd.DataFrame) -> float:
     """Fit on train, tune the cutoff on val if the model gives probabilities, and return the fit time."""
     start = time.perf_counter()
-    model.fit(train_df)
+    if isinstance(model, NeuralModel):
+        model.fit(train_df, val)  # early stopping on val
+    else:
+        model.fit(train_df)
     train_seconds = time.perf_counter() - start
     if hasattr(model, "predict_proba"):
         model.cutoff = tune_cutoff(model, val)
@@ -148,7 +154,7 @@ def save(tag: str, model, params: dict, train_seconds: float, train_df: pd.DataF
         "tag": tag,
         "model": type(model).__name__,
         "trainable": trainable,
-        "epochs": getattr(model, "epochs", None),
+        "epochs": getattr(model, "best_epoch", getattr(model, "epochs", None)),  # kept by early stopping
         "hyperparameters": params,
         "cutoff": getattr(model, "cutoff", None),
         "cutoff_tuned_on": "val" if tuned else None,
@@ -194,7 +200,8 @@ def grid_search(tag: str, train_df: pd.DataFrame, val: pd.DataFrame) -> None:
 
         score = csi(val[HEAVY], model.predict_heavy(val))
         mae = float((model.predict(val) - val[RAIN]).abs().mean()) if hasattr(model, "predict") else None
-        rows.append({**settings, "val_csi": round(score, 4), "val_mae": mae and round(mae, 4),
+        rows.append({**settings, "epochs": getattr(model, "best_epoch", None),
+                     "val_csi": round(score, 4), "val_mae": mae and round(mae, 4),
                      "cutoff": model.cutoff, "train_seconds": round(train_seconds, 4)})
         if best is None or score > best[0]:
             best = (score, model, params, train_seconds, settings)

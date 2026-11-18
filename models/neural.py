@@ -14,11 +14,18 @@ heavy days) and log(1 + rain mm) (mean squared error). The weighting balances
 the classes, so the default cutoff is 0.5; train.py tunes it on val. SEED fixes
 the initial weights, dropout and batch order, so retraining gives identical models.
 
+Early stopping: given the val winters, fit() checks that shared two-head loss
+on val after every epoch, stops once it has not improved for `patience`
+epochs (`epochs` is the cap) and keeps the weights from the best epoch
+(`best_epoch`). Without val, or with patience=None, it trains for all `epochs`.
+
 Expects the clean daily table indexed by date, e.g.
     df = pd.read_csv("data/train_data/train.csv", parse_dates=["date"], index_col="date")
 """
 
 from pathlib import Path
+
+import copy
 
 import joblib
 import numpy as np
@@ -40,9 +47,9 @@ class NeuralModel:
     name = "neural"
 
     def __init__(self, rain_col: str = "KSAC_prcp", heavy_col: str = "heavy_rain", lags: int = LAGS,
-                 stations: list[str] = STATIONS, hidden_size: int = 32, dropout: float = 0.2, epochs: int = 50,
-                 learning_rate: float = 1e-3, weight_decay: float = 1e-4, batch_size: int = 64,
-                 threshold: float | None = None):
+                 stations: list[str] = STATIONS, hidden_size: int = 32, dropout: float = 0.2, epochs: int = 200,
+                 patience: int | None = 10, learning_rate: float = 1e-3, weight_decay: float = 1e-4,
+                 batch_size: int = 64, threshold: float | None = None):
         self.rain_col = rain_col
         self.heavy_col = heavy_col
         self.lags = lags
@@ -50,6 +57,7 @@ class NeuralModel:
         self.hidden_size = hidden_size
         self.dropout = dropout
         self.epochs = epochs
+        self.patience = patience
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.batch_size = batch_size
@@ -82,7 +90,7 @@ class NeuralModel:
         return (F.binary_cross_entropy_with_logits(heavy, targets["heavy"], pos_weight=self.pos_weight)
                 + F.mse_loss(rain, targets["rain"]))
 
-    def fit(self, df: pd.DataFrame) -> "NeuralModel":
+    def fit(self, df: pd.DataFrame, val: pd.DataFrame | None = None) -> "NeuralModel":
         torch.manual_seed(SEED)
         first = self.stations[0]
         self.variables = [c.removeprefix(f"{first}_") for c in df if c.startswith(f"{first}_")]
@@ -98,14 +106,29 @@ class NeuralModel:
         self.net = self.network(len(self.stations), len(self.variables))
         optimizer = torch.optim.Adam(self.net.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
         order = torch.Generator().manual_seed(SEED)
-        self.net.train()
+        stop_early = val is not None and self.patience is not None
+        if stop_early:
+            val_inputs, val_targets = self._inputs(val), self._targets(val)
+        best_loss, best_weights, self.best_epoch = float("inf"), None, self.epochs
         for epoch in range(self.epochs):
+            self.net.train()
             for batch in torch.randperm(len(X), generator=order).split(self.batch_size):
                 outputs = self.net(X[batch], present[batch])
                 loss = self.loss(outputs, {name: target[batch] for name, target in targets.items()}, epoch)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+            if not stop_early:
+                continue
+            self.net.eval()
+            with torch.no_grad():
+                val_loss = float(NeuralModel.loss(self, self.net(*val_inputs), val_targets, epoch))
+            if val_loss < best_loss:
+                best_loss, best_weights, self.best_epoch = val_loss, copy.deepcopy(self.net.state_dict()), epoch + 1
+            elif epoch + 1 - self.best_epoch >= self.patience:
+                break
+        if best_weights is not None:
+            self.net.load_state_dict(best_weights)
         self.net.eval()
 
         self.cutoff = self.threshold if self.threshold is not None else 0.5

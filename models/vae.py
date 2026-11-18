@@ -12,7 +12,7 @@ latent is supervised, and an MLP decoder rebuilds `decode` from z:
 Loss = heavy-rain BCE + rain MSE (as in models/neural.py)
        + recon_weight (lambda) * MSE of the decoder on the observed, standardized values
        + kl_weight (beta) * KL divergence of z from a standard normal,
-with beta ramped up from 0 over the first half of training so the heads learn
+with beta ramped up from 0 over the first KL_WARMUP epochs so the heads learn
 before the KL squeezes the latent. recon_weight = 0 is a variational
 information bottleneck (Alemi et al. 2017); kl_weight = 0 is a supervised
 autoencoder. Training samples z; prediction uses the mean, so it is deterministic.
@@ -25,6 +25,8 @@ import torch.nn.functional as F
 from torch import nn
 
 from models.neural import NeuralModel
+
+KL_WARMUP = 10
 
 
 class VAENet(nn.Module):
@@ -76,5 +78,5 @@ class VAE(NeuralModel):
         observed = ~targets["decode"].isnan()
         recon = F.mse_loss(decoded[observed], targets["decode"][observed])
         kl = -0.5 * (1 + log_var - mean ** 2 - log_var.exp()).sum(-1).mean()
-        warmup = min(1.0, epoch / (self.epochs / 2))
+        warmup = min(1.0, epoch / KL_WARMUP)
         return super().loss(outputs, targets, epoch) + self.recon_weight * recon + warmup * self.kl_weight * kl
