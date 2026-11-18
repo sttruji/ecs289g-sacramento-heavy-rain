@@ -58,6 +58,8 @@ MODELS = {
     "gat": GAT,  # graph over all stations by design
     "vae": VAE,  # decoder rebuilds the lag window
     "vae_today": lambda **kwargs: VAE(decode="today", **kwargs),  # decoder predicts the forecast day's weather
+    # vae_today's pick from the grid before early stopping: a fixed 20 epochs
+    "vae_today_20_epochs": lambda: VAE(decode="today", recon_weight=1.0, kl_weight=0.1, epochs=20, patience=None),
     "hrrr": HRRR,
     "logistic_regression_all_stations": lambda: LogisticRegression(stations=ALL_STATIONS),
     "random_forest_all_stations": lambda: RandomForest(stations=ALL_STATIONS),
