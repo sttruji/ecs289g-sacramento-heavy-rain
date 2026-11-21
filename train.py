@@ -190,9 +190,10 @@ def save(tag: str, model, params: dict, train_seconds: float, train_df: pd.DataF
     })
 
     cutoff = getattr(model, "cutoff", None)
+    tuned_on = "cross-validation" if (extra or {}).get("trained_on") == "train+val" else "val"
     print(f"  {tag:26s} train {f'{train_seconds:.2f}s' if trainable else 'n/a':>7s}  "
           f"predict {predict_seconds:.3f}s  cutoff {'n/a' if cutoff is None else f'{cutoff:.4g}'}"
-          f"{' (tuned on val)' if tuned else ''}  -> {weights_dir.relative_to(ROOT)}")
+          f"{f' (tuned on {tuned_on})' if tuned else ''}  -> {weights_dir.relative_to(ROOT)}")
 
 
 def train(tag: str, train_df: pd.DataFrame, val: pd.DataFrame) -> None:

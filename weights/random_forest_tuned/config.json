@@ -6,7 +6,7 @@
   "hyperparameters": {
     "rain_col": "KSAC_prcp",
     "heavy_col": "heavy_rain",
-    "lags": 1,
+    "lags": 3,
     "stations": [
       "KSAC",
       "KSFO"
@@ -54,7 +54,7 @@
       "warm_start": false
     }
   },
-  "cutoff": 0.09106750544028289,
+  "cutoff": 0.09071945682325762,
   "cutoff_tuned_on": "val",
   "grid_search": {
     "grid": {
@@ -72,7 +72,7 @@
     },
     "selected": {
       "min_samples_leaf": 20,
-      "lags": 1
+      "lags": 3
     },
     "selected_by": "highest val CSI",
     "combinations": 12
@@ -82,20 +82,21 @@
       1973,
       2011
     ],
-    "train_days": 2925,
+    "train_days": 5882,
     "val_winters": [
       2012,
       2018
     ],
-    "val_days": 602
+    "val_days": 1057
   },
-  "git_commit": "1af1fd0",
+  "git_commit": "2a51a03",
   "versions": {
-    "python": "3.13.3",
+    "python": "3.13.7",
     "numpy": "2.5.5",
     "pandas": "3.1.1",
     "scikit-learn": "1.9.1",
-    "xgboost": "3.4.1"
+    "xgboost": "3.4.1",
+    "torch": "2.15.0"
   },
-  "trained_at": "2026-11-17T10:45:38"
+  "trained_at": "2026-11-21T14:20:54"
 }

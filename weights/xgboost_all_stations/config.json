@@ -100,27 +100,28 @@
       "verbosity": null
     }
   },
-  "cutoff": 0.06155393272638321,
+  "cutoff": 0.05432814732193947,
   "cutoff_tuned_on": "val",
   "data": {
     "train_winters": [
       1973,
       2011
     ],
-    "train_days": 2925,
+    "train_days": 5882,
     "val_winters": [
       2012,
       2018
     ],
-    "val_days": 602
+    "val_days": 1057
   },
-  "git_commit": "1af1fd0",
+  "git_commit": "2a51a03",
   "versions": {
-    "python": "3.13.3",
+    "python": "3.13.7",
     "numpy": "2.5.5",
     "pandas": "3.1.1",
     "scikit-learn": "1.9.1",
-    "xgboost": "3.4.1"
+    "xgboost": "3.4.1",
+    "torch": "2.15.0"
   },
-  "trained_at": "2026-11-17T10:45:10"
+  "trained_at": "2026-11-21T14:19:55"
 }

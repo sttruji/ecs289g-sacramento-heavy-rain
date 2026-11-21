@@ -1,14 +1,14 @@
 {
   "split": "val",
-  "days": 602,
-  "heavy_days": 22,
-  "forecast_days": 580,
-  "hits": 1,
-  "misses": 19,
-  "false_alarms": 21,
-  "csi": 0.0244,
-  "precision": 0.0455,
-  "hit_rate": 0.05,
-  "mae": 3.5828,
-  "evaluated_at": "2026-11-17T10:46:20"
+  "days": 1057,
+  "heavy_days": 31,
+  "forecast_days": 1049,
+  "hits": 2,
+  "misses": 29,
+  "false_alarms": 29,
+  "csi": 0.0333,
+  "precision": 0.0645,
+  "hit_rate": 0.0645,
+  "mae": 3.4746,
+  "evaluated_at": "2026-11-21T14:42:15"
 }

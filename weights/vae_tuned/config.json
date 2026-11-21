@@ -2,7 +2,7 @@
   "tag": "vae_tuned",
   "model": "VAE",
   "trainable": true,
-  "epochs": 8,
+  "epochs": 11,
   "hyperparameters": {
     "rain_col": "KSAC_prcp",
     "heavy_col": "heavy_rain",
@@ -22,9 +22,9 @@
     "decode": "inputs",
     "latent_size": 8,
     "recon_weight": 0.0,
-    "kl_weight": 0.1
+    "kl_weight": 0.0
   },
-  "cutoff": 0.8023352921009064,
+  "cutoff": 0.9252856373786926,
   "cutoff_tuned_on": "val",
   "grid_search": {
     "grid": {
@@ -41,7 +41,7 @@
     },
     "selected": {
       "recon_weight": 0.0,
-      "kl_weight": 0.1
+      "kl_weight": 0.0
     },
     "selected_by": "highest val CSI",
     "combinations": 9
@@ -51,21 +51,21 @@
       1973,
       2011
     ],
-    "train_days": 2925,
+    "train_days": 5882,
     "val_winters": [
       2012,
       2018
     ],
-    "val_days": 602
+    "val_days": 1057
   },
-  "git_commit": "c5d8d18",
+  "git_commit": "2a51a03",
   "versions": {
-    "python": "3.13.3",
+    "python": "3.13.7",
     "numpy": "2.5.5",
     "pandas": "3.1.1",
     "scikit-learn": "1.9.1",
     "xgboost": "3.4.1",
     "torch": "2.15.0"
   },
-  "trained_at": "2026-11-18T10:44:30"
+  "trained_at": "2026-11-21T14:22:12"
 }

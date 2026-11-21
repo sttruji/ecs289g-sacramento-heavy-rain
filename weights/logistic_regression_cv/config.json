@@ -1,0 +1,93 @@
+{
+  "tag": "logistic_regression_cv",
+  "model": "LogisticRegression",
+  "trainable": true,
+  "epochs": null,
+  "hyperparameters": {
+    "heavy_col": "heavy_rain",
+    "lags": 1,
+    "stations": [
+      "KSAC",
+      "KSFO"
+    ],
+    "threshold": null,
+    "pipeline": {
+      "memory": null,
+      "transform_input": null,
+      "verbose": false,
+      "simpleimputer__add_indicator": false,
+      "simpleimputer__copy": true,
+      "simpleimputer__fill_value": null,
+      "simpleimputer__keep_empty_features": false,
+      "simpleimputer__missing_values": NaN,
+      "simpleimputer__strategy": "median",
+      "standardscaler__copy": true,
+      "standardscaler__with_mean": true,
+      "standardscaler__with_std": true,
+      "logisticregression__C": 10.0,
+      "logisticregression__class_weight": null,
+      "logisticregression__dual": false,
+      "logisticregression__fit_intercept": true,
+      "logisticregression__intercept_scaling": 1,
+      "logisticregression__l1_ratio": 0.0,
+      "logisticregression__max_iter": 1000,
+      "logisticregression__n_jobs": null,
+      "logisticregression__penalty": "deprecated",
+      "logisticregression__random_state": null,
+      "logisticregression__solver": "lbfgs",
+      "logisticregression__tol": 0.0001,
+      "logisticregression__verbose": 0,
+      "logisticregression__warm_start": false
+    }
+  },
+  "cutoff": 0.18019066337616216,
+  "cutoff_tuned_on": "cross-validation (pooled out-of-fold, train+val winters)",
+  "trained_on": "train+val",
+  "cv": {
+    "settings": {
+      "C": 10.0,
+      "lags": 1
+    },
+    "seeds": null,
+    "epochs": null,
+    "cutoff": 0.18019066337616216,
+    "cv": {
+      "ap": 0.22,
+      "brier": 0.0222,
+      "roc_auc": 0.9013,
+      "csi_best": 0.1844,
+      "ap_ci90": [
+        0.1765,
+        0.2757
+      ],
+      "csi_best_ci90": [
+        0.1538,
+        0.2148
+      ]
+    },
+    "combinations": 20,
+    "selected_by": "highest leave-one-winter-out average precision"
+  },
+  "data": {
+    "train_winters": [
+      1973,
+      2018
+    ],
+    "train_days": 6939,
+    "val_winters": [
+      2012,
+      2018
+    ],
+    "val_days": 1057
+  },
+  "git_commit": "2a51a03",
+  "versions": {
+    "python": "3.13.7",
+    "numpy": "2.5.5",
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "torch": "2.15.0"
+  },
+  "trained_at": "2026-11-21T14:42:06"
+}

@@ -227,13 +227,59 @@ On this Mac, `train.py --models xgboost` crashed with a segmentation fault (exit
 the OpenMP library (`libomp`), and fitting XGBoost afterwards, with Homebrew's copy, crashes the process.
 `models/__init__.py` now imports XGBoost before the PyTorch models, and both train normally.
 
-## Status and what is stale
+## Final models: tuned by cross-validation, then tested once
 
-- `data/clean_daily.csv`, `data/train_data/*`, `data/test_data/test.csv`, `data/ghcnd_daily.csv` and
-  `data/hrrr_daily.csv` are rebuilt.
-- `weights/*/config.json`, `results/*` and `results/leaderboard.csv` **still describe models trained on `main`'s
-  data**. They need retraining (`train.py`, `train.py --grid`, `evaluate.py`, `leaderboard.py`) once we decide which
-  models to carry forward.
+**Tuning (`crossval.py --grid`).** A leave-one-winter-out grid search over the 46 train+val winters, selected by
+pooled AP. Neural models are averaged over 3 seeds. The full grids are in `results/cv/grid_<model>.csv` and the
+choices in `results/cv/selected.json`.
+
+| Model | Selected settings | CV AP [90% CI] | CV ROC-AUC | Cutoff (from CV) |
+|---|---|---|---|---|
+| Logistic regression | C = 10, 1 day of history | 0.220 [0.176, 0.276] | 0.903 | 0.180 |
+| XGBoost | depth 5, learning rate 0.03, 100 trees, 1 day of history | 0.231 [0.176, 0.292] | 0.907 | 0.120 |
+| GRU | 32 hidden units, 1 day of history, 8 epochs | 0.229 [0.180, 0.281] | 0.914 | 0.914 |
+
+**All three choose 1 day of history.** Adding more days lowers AP in every grid, which fits the ablation result
+that the latest observations matter most. For logistic regression, C = 10 is at the edge of the grid, but it beats
+C = 1 by only 0.002 AP.
+
+**Final training (`train.py --cv`).** Each selected setting is refit on **all train+val winters** and saved as
+`<model>_cv`.
+- The cutoff comes from the cross-validated predictions, not from the validation set.
+- The GRU trains for the median early-stopping epoch, averaged over 3 seeds (`models/seed_average.py`).
+- Because val is part of their training data, `evaluate.py` scores the `_cv` models on test only.
+
+**Test winters 2019–25, scored once** (1,054 days, 20 heavy). HRRR forecasts every test day.
+
+| Model | Test CSI | Test AP [90% CI] | AP − HRRR [90% CI] | CSI − HRRR [90% CI] |
+|---|---|---|---|---|
+| Persistence | 0.000 | — | — | — |
+| Climatology | 0.030 | — | — | — |
+| Logistic regression (CV) | 0.222 | 0.329 [0.230, 0.527] | −0.210 [−0.380, +0.017] | −0.101 [−0.265, +0.064] |
+| XGBoost (CV) | 0.200 | 0.380 [0.233, 0.644] | −0.158 [−0.317, +0.019] | −0.124 [−0.241, −0.010] |
+| **GRU (CV)** | **0.273** | **0.425 [0.277, 0.653]** | −0.114 [−0.320, +0.137] | −0.051 [−0.243, +0.158] |
+| **HRRR** (NOAA's weather model) | **0.324** | **0.539 [0.400, 0.716]** | — | — |
+
+**How to read this.**
+1. **Every station-only model beats persistence by a wide margin.** The gain over persistence is +0.20 to +0.27
+   CSI, and every interval excludes zero. That answers the project's core question: yes.
+2. **HRRR is still better.** Its AP is clearly higher (0.54 vs 0.33–0.43). Only XGBoost's CSI gap is outside noise,
+   though; the GRU's interval for the CSI gap includes zero.
+3. **Test AP is higher than CV AP** (0.33–0.43 vs about 0.22). The 2019–25 winters seem easier, or have more
+   complete data, than the 1970s–2010s average. This is one reason to report CV and test together.
+4. **Don't pick models from the test table.** Among all retrained models, the val-tuned VAE scores 0.288 and the
+   default VAE 0.294 on test, above the CV models. But 20 events can't rank models: one more hit moves CSI by about
+   0.03. Model choice was made by cross-validation before test was run, and that choice should stand.
+   **Recommended for the report: the GRU (CV), with logistic regression (CV) as the simple, interpretable baseline.**
+
+## Status
+
+- All data files are rebuilt for v2.
+- **Every model on the leaderboard is retrained on the v2 data:** the team's defaults and val-tuned `_tuned`
+  versions, plus the new CV-tuned `_cv` models. All are scored on val (except `_cv`) and on test.
+- `results/leaderboard.csv` includes `cv_*` columns for the `_cv` models.
+- Not done: the two extra features (SFO−SAC pressure difference, day of season), probability calibration for the
+  GRU, and saving per-day test predictions for the case studies.
 
 ## Reproduce
 
@@ -245,6 +291,11 @@ the OpenMP library (`libomp`), and fitting XGBoost afterwards, with Homebrew's c
 .venv/bin/python scripts/data_report.py          # coverage + risk check (run from scripts/ or repo root)
 .venv/bin/python crossval.py                     # leave-one-winter-out scores -> results/cv/summary.csv (~5 min)
 .venv/bin/python crossval_ablation.py --models logistic_regression xgboost gru --seeds 3   # -> results/cv/ablation.csv (~15 min)
+.venv/bin/python crossval.py --grid              # CV tuning -> results/cv/selected.json (~45 min)
+.venv/bin/python train.py && .venv/bin/python train.py --grid   # team's models on v2 data
+.venv/bin/python train.py --cv                   # final <model>_cv models on train+val
+.venv/bin/python evaluate.py --split val && .venv/bin/python evaluate.py --split test
+.venv/bin/python leaderboard.py
 ```
 
 On macOS, XGBoost needs OpenMP: `brew install libomp`.

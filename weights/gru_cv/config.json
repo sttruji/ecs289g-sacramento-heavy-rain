@@ -1,0 +1,74 @@
+{
+  "tag": "gru_cv",
+  "model": "SeedAverage",
+  "trainable": true,
+  "epochs": 8,
+  "hyperparameters": {
+    "rain_col": "KSAC_prcp",
+    "heavy_col": "heavy_rain",
+    "lags": 1,
+    "stations": [
+      "KSAC",
+      "KSFO"
+    ],
+    "hidden_size": 32,
+    "dropout": 0.2,
+    "epochs": 8,
+    "patience": null,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "batch_size": 64,
+    "threshold": null,
+    "seeds": 3
+  },
+  "cutoff": 0.9135570824146271,
+  "cutoff_tuned_on": "cross-validation (pooled out-of-fold, train+val winters)",
+  "trained_on": "train+val",
+  "cv": {
+    "settings": {
+      "hidden_size": 32,
+      "lags": 1
+    },
+    "seeds": 3,
+    "epochs": 8,
+    "cutoff": 0.9135570824146271,
+    "cv": {
+      "ap": 0.2288,
+      "brier": 0.1306,
+      "roc_auc": 0.9138,
+      "csi_best": 0.179,
+      "ap_ci90": [
+        0.1805,
+        0.2814
+      ],
+      "csi_best_ci90": [
+        0.1419,
+        0.2145
+      ]
+    },
+    "combinations": 6,
+    "selected_by": "highest leave-one-winter-out average precision"
+  },
+  "data": {
+    "train_winters": [
+      1973,
+      2018
+    ],
+    "train_days": 6939,
+    "val_winters": [
+      2012,
+      2018
+    ],
+    "val_days": 1057
+  },
+  "git_commit": "2a51a03",
+  "versions": {
+    "python": "3.13.7",
+    "numpy": "2.5.5",
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "torch": "2.15.0"
+  },
+  "trained_at": "2026-11-21T14:42:08"
+}

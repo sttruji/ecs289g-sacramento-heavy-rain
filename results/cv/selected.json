@@ -1,0 +1,79 @@
+{
+  "logistic_regression": {
+    "settings": {
+      "C": 10.0,
+      "lags": 1
+    },
+    "seeds": null,
+    "epochs": null,
+    "cutoff": 0.18019066337616216,
+    "cv": {
+      "ap": 0.22,
+      "brier": 0.0222,
+      "roc_auc": 0.9013,
+      "csi_best": 0.1844,
+      "ap_ci90": [
+        0.1765,
+        0.2757
+      ],
+      "csi_best_ci90": [
+        0.1538,
+        0.2148
+      ]
+    },
+    "combinations": 20,
+    "selected_by": "highest leave-one-winter-out average precision"
+  },
+  "xgboost": {
+    "settings": {
+      "max_depth": 5,
+      "learning_rate": 0.03,
+      "n_estimators": 100,
+      "lags": 1
+    },
+    "seeds": null,
+    "epochs": null,
+    "cutoff": 0.12033296748995781,
+    "cv": {
+      "ap": 0.2309,
+      "brier": 0.0216,
+      "roc_auc": 0.9069,
+      "csi_best": 0.1912,
+      "ap_ci90": [
+        0.1758,
+        0.292
+      ],
+      "csi_best_ci90": [
+        0.1552,
+        0.2259
+      ]
+    },
+    "combinations": 24,
+    "selected_by": "highest leave-one-winter-out average precision"
+  },
+  "gru": {
+    "settings": {
+      "hidden_size": 32,
+      "lags": 1
+    },
+    "seeds": 3,
+    "epochs": 8,
+    "cutoff": 0.9135570824146271,
+    "cv": {
+      "ap": 0.2288,
+      "brier": 0.1306,
+      "roc_auc": 0.9138,
+      "csi_best": 0.179,
+      "ap_ci90": [
+        0.1805,
+        0.2814
+      ],
+      "csi_best_ci90": [
+        0.1419,
+        0.2145
+      ]
+    },
+    "combinations": 6,
+    "selected_by": "highest leave-one-winter-out average precision"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "train_seconds": 0.3388,
+  "train_days": 6939,
+  "predict_seconds": 0.0068,
+  "predict_days": 1057
+}
