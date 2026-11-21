@@ -2,7 +2,8 @@
 Compile every model's config, timings and scores into results/leaderboard.csv.
 
 One row per model tag: model class, stations used as features, epochs, cutoff,
-training and prediction times (results/<tag>/train.json), each evaluated
+training and prediction times (results/<tag>/train.json), cross-validated
+scores for the <tag>_cv models (crossval.py), each evaluated
 split's scores (results/<tag>/metrics_<split>.json), and the exact
 hyperparameters (weights/<tag>/config.json). "n/a" marks values that do not
 apply, e.g. no station features or training for persistence and HRRR, or no
@@ -25,6 +26,7 @@ RESULTS_DIR = ROOT / "results"
 SPLITS = ["val", "test"]
 METRICS = ["days", "forecast_days", "heavy_days", "csi", "precision", "hit_rate", "mae",
            "csi_diff_vs_persistence", "csi_diff_ci90_low", "csi_diff_ci90_high"]
+CV_METRICS = ["ap", "roc_auc", "brier", "csi_best"]  # crossval.py scores of the <tag>_cv models
 NA = "n/a"
 
 
@@ -46,6 +48,8 @@ def model_row(tag: str) -> dict:
         "train_seconds": timing.get("train_seconds"),
         "predict_seconds": timing.get("predict_seconds"),
     }
+    cv = config.get("cv", {}).get("cv", {})
+    row.update({f"cv_{m}": cv.get(m) for m in CV_METRICS})
     for split in SPLITS:
         metrics = read_json(RESULTS_DIR / tag / f"metrics_{split}.json")
         if metrics:
@@ -61,7 +65,7 @@ def main() -> None:
     board = pd.DataFrame([model_row(tag) for tag in tags]).set_index("tag")
 
     columns = ["model", "stations", "trainable", "epochs", "cutoff", "train_seconds", "predict_seconds"]
-    columns += [f"{s}_{m}" for s in SPLITS for m in METRICS] + ["hyperparameters", "git_commit", "trained_at"]
+    columns += [f"cv_{m}" for m in CV_METRICS] + [f"{s}_{m}" for s in SPLITS for m in METRICS] + ["hyperparameters", "git_commit", "trained_at"]
     board = board.reindex(columns=columns).dropna(axis=1, how="all")
 
     path = RESULTS_DIR / "leaderboard.csv"

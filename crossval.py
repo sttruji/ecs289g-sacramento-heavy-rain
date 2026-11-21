@@ -26,13 +26,22 @@ winters of each fold (never the held-out winter), and scores are averaged over
 Writes results/cv/summary.csv and results/cv/oof.csv (out-of-fold
 probabilities, one column per model, useful for case studies).
 
+CV grid search (--grid): each model in CV_GRIDS tries every combination, scored
+the same way; the highest pooled AP wins. Writes results/cv/grid_<tag>.csv and
+results/cv/selected.json (settings, CV scores, the best-CSI cutoff from the
+pooled out-of-fold predictions and, for neural models, the median early-stopping
+epoch), which `train.py --cv` uses to train the final models on all train+val winters.
+
 Usage:
     python crossval.py
+    python crossval.py --grid                # ~45 min
     python crossval.py --models logistic_regression xgboost gru --seeds 5
     python crossval.py --folds 10          # 10 contiguous blocks of winters instead
 """
 
 import argparse
+import itertools
+import json
 import time
 from pathlib import Path
 
@@ -51,6 +60,15 @@ INNER_VAL_WINTERS = 5
 N_BOOT = 1000
 SEED = 42
 DEFAULT_MODELS = ["climatology", "logistic_regression", "xgboost", "gru"]
+SELECTED_PATH = OUT_DIR / "selected.json"
+
+# CV hyperparameter grids (constructor arguments). Neural models pick epochs by early stopping.
+CV_GRIDS = {
+    "logistic_regression": {"C": [0.001, 0.01, 0.1, 1.0, 10.0], "lags": [1, 2, 3, 5]},
+    "xgboost": {"max_depth": [2, 3, 5], "learning_rate": [0.03, 0.1], "n_estimators": [100, 300], "lags": [1, 3]},
+    "gru": {"hidden_size": [16, 32], "lags": [1, 3, 5]},
+}
+GRID_SEEDS = 3
 
 
 def winter_folds(winters, k: int | None = None) -> list[list[int]]:
@@ -61,12 +79,14 @@ def winter_folds(winters, k: int | None = None) -> list[list[int]]:
     return [list(block) for block in np.array_split(winters, k)]
 
 
-def oof_proba(make_model, df: pd.DataFrame, folds: list[list[int]], predict_on: pd.DataFrame | None = None) -> pd.Series:
+def oof_proba(make_model, df: pd.DataFrame, folds: list[list[int]], predict_on: pd.DataFrame | None = None,
+              epochs: list | None = None) -> pd.Series:
     """Out-of-fold heavy-rain probabilities.
 
     df is the training table (its own features and heavy_rain labels).
     predict_on, if given, is the table whose rows are predicted for each held-out
     winter (defaults to df); it lets two data versions be scored on the same days.
+    epochs, if given, collects each neural fold's early-stopping epoch.
     """
     predict_on = df if predict_on is None else predict_on
     out = pd.Series(np.nan, index=predict_on.index)
@@ -80,22 +100,24 @@ def oof_proba(make_model, df: pd.DataFrame, folds: list[list[int]], predict_on: 
             recent = sorted(train["winter"].unique())[-INNER_VAL_WINTERS:]
             inner = train["winter"].isin(recent)
             model.fit(train[~inner], train[inner])
+            if epochs is not None:
+                epochs.append(model.best_epoch)
         else:
             model.fit(train)
         out.loc[test.index] = model.predict_proba(test).to_numpy()
     return out
 
 
-def oof_seeds(make_model, df, folds, seeds: int, predict_on=None) -> pd.Series:
+def oof_seeds(make_model, df, folds, seeds: int, predict_on=None, epochs: list | None = None) -> pd.Series:
     """oof_proba averaged over seeds for neural models (one run for everything else)."""
     if not isinstance(make_model(), neural.NeuralModel) or seeds <= 1:
-        return oof_proba(make_model, df, folds, predict_on)
+        return oof_proba(make_model, df, folds, predict_on, epochs)
     runs = []
     original = neural.SEED
     try:
         for s in range(seeds):
             neural.SEED = original + s
-            runs.append(oof_proba(make_model, df, folds, predict_on))
+            runs.append(oof_proba(make_model, df, folds, predict_on, epochs))
     finally:
         neural.SEED = original
     return pd.concat(runs, axis=1).mean(axis=1)
@@ -151,17 +173,65 @@ def fmt_ci(ci) -> str:
     return f"[{ci[0]:.3f}, {ci[1]:.3f}]"
 
 
+def clean(v):
+    if isinstance(v, float):
+        return round(v, 4)
+    if isinstance(v, tuple):
+        return [round(x, 4) for x in v]
+    return v
+
+
+def grid_search(tag: str, df: pd.DataFrame, folds) -> dict:
+    """Try every combination in CV_GRIDS[tag]; return the best by pooled out-of-fold AP."""
+    grid = CV_GRIDS[tag]
+    y = df[HEAVY]
+    rows, best = [], None
+    for values in itertools.product(*grid.values()):
+        settings = dict(zip(grid, values))
+        start = time.perf_counter()
+        epochs = []
+        p = oof_seeds(lambda: MODELS[tag](**settings), df, folds, GRID_SEEDS, epochs=epochs)
+        s = scores(y, p)
+        epoch = int(np.median(epochs)) if epochs else None
+        rows.append({**settings, **{k: clean(v) for k, v in s.items()}, "median_epoch": epoch,
+                     "seconds": round(time.perf_counter() - start, 1)})
+        print(f"    {settings}  AP {s['ap']:.3f}  ROC-AUC {s['roc_auc']:.3f}  CSI {s['csi_best']:.3f}"
+              + (f"  epoch {epoch}" if epoch else ""), flush=True)
+        if best is None or s["ap"] > best[0]:
+            best = (s["ap"], settings, p, epoch)
+    pd.DataFrame(rows).to_csv(OUT_DIR / f"grid_{tag}.csv", index=False)
+    _, settings, p, epoch = best
+    s = summarize(y, df["winter"], p)
+    return {"settings": settings, "seeds": GRID_SEEDS if epoch else None, "epochs": epoch, "cutoff": s["cutoff"],
+            "cv": {k: clean(v) for k, v in s.items() if k != "cutoff"},
+            "combinations": len(rows), "selected_by": "highest leave-one-winter-out average precision"}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--models", nargs="+", default=DEFAULT_MODELS, choices=[m for m in MODELS if m != "hrrr"])
     parser.add_argument("--seeds", type=int, default=5, help="seeds averaged for the neural models")
     parser.add_argument("--folds", type=int, default=None, help="contiguous winter blocks (default: one per winter)")
+    parser.add_argument("--grid", action="store_true", help="CV grid search for the models in CV_GRIDS")
     args = parser.parse_args()
 
     df = pd.concat([load_split("train"), load_split("val")]).sort_index()
     folds = winter_folds(df["winter"].unique(), args.folds)
     y, winters = df[HEAVY], df["winter"]
     print(f"train+val: {len(df):,} days, {int(y.sum())} heavy, {df['winter'].nunique()} winters, {len(folds)} folds")
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    if args.grid:
+        selected = json.loads(SELECTED_PATH.read_text()) if SELECTED_PATH.exists() else {}
+        tags = list(CV_GRIDS) if args.models == DEFAULT_MODELS else [m for m in args.models if m in CV_GRIDS]
+        for tag in tags:
+            print(f"  {tag}: grid {CV_GRIDS[tag]}", flush=True)
+            selected[tag] = choice = grid_search(tag, df, folds)
+            SELECTED_PATH.write_text(json.dumps(selected, indent=2))
+            print(f"  -> {tag}: {choice['settings']}  AP {choice['cv']['ap']:.3f} {fmt_ci(choice['cv']['ap_ci90'])}  "
+                  f"cutoff {choice['cutoff']:.4f}", flush=True)
+        print(f"-> {SELECTED_PATH.relative_to(ROOT)}")
+        return
 
     persistence = Persistence().predict_heavy(df)
     has = persistence.notna()

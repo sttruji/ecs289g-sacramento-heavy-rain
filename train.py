@@ -11,6 +11,14 @@ For each model tag in MODELS this:
        hyperparameters, cutoff, data, git commit and package versions
     5. saves results/<tag>/train.json with the training and prediction times
 
+With --cv, it instead trains the final models chosen by crossval.py --grid
+(results/cv/selected.json) on ALL train+val winters and saves them as
+"<tag>_cv": the cross-validated settings, the cutoff from the pooled
+out-of-fold predictions (not tuned on val), and for neural models the median
+early-stopping epoch as a fixed epoch count, averaged over the same number of
+seeds as in cross-validation (models/seed_average.py). Val is then part of their
+training data, so evaluate.py scores them on test only.
+
 With --grid, each model in GRIDS instead tries every combination in its grid
 (steps 1-2 per combination), keeps the one with the highest validation CSI, and
 saves it as "<tag>_tuned" with every combination's score in
@@ -20,6 +28,7 @@ Usage:
     python train.py
     python train.py --models logistic_regression random_forest
     python train.py --grid
+    python train.py --cv
 """
 
 import argparse
@@ -36,7 +45,9 @@ import numpy as np
 import pandas as pd
 
 from evaluate import HEAVY, RAIN, csi, load_split
-from models import GAT, GRU, HRRR, VAE, Climatology, LogisticRegression, Persistence, RandomForest, XGBoost
+from models import (GAT, GRU, HRRR, VAE, Climatology, LogisticRegression, Persistence, RandomForest, SeedAverage,
+                    XGBoost)
+from models import neural
 from models.features import ALL_STATIONS
 from models.neural import NeuralModel
 
@@ -218,14 +229,52 @@ def grid_search(tag: str, train_df: pd.DataFrame, val: pd.DataFrame) -> None:
     })
 
 
+def train_from_cv(train_df: pd.DataFrame, val: pd.DataFrame) -> None:
+    """Fit each model selected by crossval.py --grid on train+val and save it as <tag>_cv."""
+    from crossval import SELECTED_PATH  # imported here: crossval imports this module
+
+    selected = json.loads(SELECTED_PATH.read_text())
+    train_val = pd.concat([train_df, val]).sort_index()
+    for tag, choice in selected.items():
+        settings, epochs, seeds = choice["settings"], choice["epochs"], choice["seeds"]
+        start = time.perf_counter()
+        if epochs:  # neural: fixed epochs, averaged over seeds like in cross-validation
+            members, original = [], neural.SEED
+            try:
+                for s in range(seeds):
+                    neural.SEED = original + s
+                    member = MODELS[tag](**settings, epochs=epochs, patience=None)
+                    params = {**hyperparameters(member), "seeds": seeds}
+                    members.append(member.fit(train_val))
+            finally:
+                neural.SEED = original
+            model = SeedAverage(members)
+            model.epochs = epochs
+        else:
+            model = MODELS[tag](**settings)
+            params = hyperparameters(model)
+            model.fit(train_val)
+        train_seconds = time.perf_counter() - start
+        model.cutoff = choice["cutoff"]
+        save(f"{tag}_cv", model, params, train_seconds, train_val, val, extra={
+            "cutoff_tuned_on": "cross-validation (pooled out-of-fold, train+val winters)",
+            "trained_on": "train+val",
+            "cv": choice,
+        })
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--models", nargs="+", default=list(MODELS), choices=list(MODELS), help="model tags")
     parser.add_argument("--grid", action="store_true", help="grid-search the models in GRIDS, save as <tag>_tuned")
+    parser.add_argument("--cv", action="store_true", help="train crossval.py's selected models on train+val as <tag>_cv")
     args = parser.parse_args()
 
     train_df, val = load_split("train"), load_split("val")
     print(f"train {len(train_df):,} days, val {len(val):,} days")
+    if args.cv:
+        train_from_cv(train_df, val)
+        return
     for tag in args.models:
         if not args.grid:
             train(tag, train_df, val)

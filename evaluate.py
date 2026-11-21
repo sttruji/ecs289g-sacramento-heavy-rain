@@ -102,6 +102,9 @@ def main() -> None:
     print(f"{args.split}: {len(df):,} days, {int(df[HEAVY].sum())} heavy")
     for tag in tags:
         config = json.loads((WEIGHTS_DIR / tag / "config.json").read_text())
+        if config.get("trained_on") == "train+val" and args.split != "test":
+            print(f"  {tag:20s} skipped: trained on {config['trained_on']}, so {args.split} scores would be in-sample")
+            continue
         model = getattr(models, config["model"]).load(WEIGHTS_DIR / tag)
         heavy = model.predict_heavy(df)
         rain = model.predict(df) if hasattr(model, "predict") else None

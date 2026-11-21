@@ -10,3 +10,4 @@ from models.logistic_regression import LogisticRegression
 from models.persistence import Persistence
 from models.random_forest import RandomForest
 from models.vae import VAE
+from models.seed_average import SeedAverage
