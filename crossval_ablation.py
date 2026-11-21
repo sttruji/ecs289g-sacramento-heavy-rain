@@ -19,7 +19,7 @@ test winters are never used. AP differences are against the first version in
 each evaluation set, with 90% winter-bootstrap intervals.
 
 Needs data/raw_data/ (scripts/dataset_downloader.py) and the main branch in git.
-Writes results/cv/ablation.csv.
+Writes results/cv/ablation.csv, or ablation_p<percentile>.csv with --percentile.
 
 Usage:
     python crossval_ablation.py
@@ -49,22 +49,23 @@ def main_table() -> pd.DataFrame:
     return pd.read_csv(io.StringIO(text), parse_dates=["date"], index_col="date")
 
 
-def labelled(df: pd.DataFrame) -> pd.DataFrame:
+def labelled(df: pd.DataFrame, percentile: float = dp.HEAVY_PERCENTILE) -> tuple[pd.DataFrame, float]:
     """Add the split's heavy_rain label with this table's own training threshold."""
-    threshold = dp.heavy_threshold(df[df["winter"] < dp.VAL_FIRST_WINTER])
+    threshold = dp.heavy_threshold(df[df["winter"] < dp.VAL_FIRST_WINTER], percentile)
     return df.assign(heavy_rain=(df[f"{dp.TARGET}_prcp"] >= threshold).astype(int)), threshold
 
 
-def versions() -> dict[str, tuple[pd.DataFrame, float]]:
+def versions(percentile: float = dp.HEAVY_PERCENTILE) -> dict[str, tuple[pd.DataFrame, float]]:
     drop_late = lambda df: df[[c for c in df if not c.endswith(LATE)]]
     a = main_table().drop(columns="split")
     print("  building B (Nov-Mar, hourly rain) ...", flush=True)
     b = drop_late(dp.build_daily(use_ghcnd=False))
     print("  building C/D (Nov-Mar, GHCN-Daily) ...", flush=True)
     d = dp.build_daily()
-    out = {"A main": (a, dp.heavy_threshold(a[a["winter"] < dp.VAL_FIRST_WINTER]))}
-    for name, df in [("B + Nov-Mar", b), ("C + GHCN-Daily", drop_late(d)), ("D + late-evening", d)]:
-        out[name] = labelled(df)
+    # A is relabelled with the same rule (at the 90th percentile this reproduces main's own labels)
+    out = {}
+    for name, df in [("A main", a), ("B + Nov-Mar", b), ("C + GHCN-Daily", drop_late(d)), ("D + late-evening", d)]:
+        out[name] = labelled(df, percentile)
     # Never touch the test winters
     return {k: (df[df["winter"] < dp.TEST_FIRST_WINTER], t) for k, (df, t) in out.items()}
 
@@ -74,10 +75,13 @@ def main() -> None:
     parser.add_argument("--models", nargs="+", default=["logistic_regression", "xgboost"],
                         choices=[m for m in MODELS if m not in ("hrrr", "persistence")])
     parser.add_argument("--seeds", type=int, default=5, help="seeds averaged for the neural models")
+    parser.add_argument("--percentile", type=float, default=dp.HEAVY_PERCENTILE,
+                        help="heavy-rain percentile of training wet days (sensitivity check, e.g. 75)")
     args = parser.parse_args()
+    out_name = "ablation.csv" if args.percentile == dp.HEAVY_PERCENTILE else f"ablation_p{args.percentile:g}.csv"
 
     print("Building data versions:")
-    tables = versions()
+    tables = versions(args.percentile)
     for name, (df, t) in tables.items():
         print(f"  {name:18s} {len(df):,} days, {df['winter'].nunique()} winters, "
               f"{int(df[HEAVY].sum())} heavy at >= {t:.1f} mm (own labels)")
@@ -126,8 +130,8 @@ def main() -> None:
                       f"CSI {s['csi_best']:.3f}  Brier {s['brier']:.4f}{diff}")
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(rows).to_csv(OUT_DIR / "ablation.csv", index=False)
-    print(f"\n-> {(OUT_DIR / 'ablation.csv').relative_to(ROOT)}")
+    pd.DataFrame(rows).to_csv(OUT_DIR / out_name, index=False)
+    print(f"\n-> {(OUT_DIR / out_name).relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

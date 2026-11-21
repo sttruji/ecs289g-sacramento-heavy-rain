@@ -272,6 +272,56 @@ C = 1 by only 0.002 AP.
    0.03. Model choice was made by cross-validation before test was run, and that choice should stand.
    **Recommended for the report: the GRU (CV), with logistic regression (CV) as the simple, interpretable baseline.**
 
+## Sensitivity check: 75th-percentile threshold (`sensitivity.py`, `crossval_ablation.py --percentile 75`)
+
+**Why.** The main results rest on 195 heavy days (20 in test). Lowering the bar to the 75th percentile of training
+wet days (≥ 14.2 mm, "moderate-to-heavy" rain) gives **453 events (46 in test)**. This checks whether the
+conclusions hold with 2.3× the data.
+
+**What stays fixed:** the data, splits and features, plus the model settings selected at the 90th percentile. Only
+the labels change, and they are relabelled in memory: `data/` and `weights/` are untouched. Outputs are in
+`results/sensitivity_p75/` and `results/cv/ablation_p75.csv`. The 90th percentile remains the main result.
+
+**1. The late-evening features are still the main gain.** AP on the same Dec–Feb days, against the same truth:
+
+| Version | Logistic regression | XGBoost | GRU |
+|---|---|---|---|
+| A `main` | 0.301 | 0.297 | 0.288 |
+| B + Nov–Mar | 0.295 | 0.281 | 0.310 |
+| C + GHCN-Daily | 0.312 | 0.303 | 0.322 |
+| **D + late evening** | **0.370** (+0.069 [+0.033, +0.110]) | **0.359** (+0.062 [+0.025, +0.105]) | **0.381** (+0.093 [+0.055, +0.132]) |
+
+The pattern is the same as at the 90th percentile. The late-evening features add +0.06 to +0.09 AP over `main`,
+with intervals that exclude zero. Nov–Mar and GHCN alone are roughly neutral, except for small gains for the GRU.
+
+**2. The three models are still tied in cross-validation**, now with tighter intervals:
+
+| Model | CV AP [90% CI] | CV CSI (best cutoff) |
+|---|---|---|
+| Persistence | — | 0.131 |
+| Climatology | 0.064 | 0.067 |
+| Logistic regression | 0.385 [0.345, 0.432] | 0.286 |
+| XGBoost | 0.393 [0.354, 0.437] | 0.284 |
+| GRU (3 seeds) | 0.380 [0.342, 0.422] | 0.285 |
+
+**3. Test (46 events): the gap to HRRR nearly closes at this threshold.**
+
+| Model | CSI | Hits / misses / false alarms | AP | CSI − HRRR [90% CI] |
+|---|---|---|---|---|
+| Persistence | 0.046 | — | — | — |
+| Logistic regression | 0.315 | 29 / 17 / 46 | 0.463 | −0.080 [−0.197, −0.004] |
+| **XGBoost** | **0.371** | 33 / 13 / 43 | **0.518** | **−0.024 [−0.093, +0.048]** |
+| GRU | 0.342 | 26 / 20 / 30 | 0.499 | −0.053 [−0.124, −0.006] |
+| **HRRR** | **0.395** | 32 / 14 / 35 | **0.526** | — |
+
+**What this adds.**
+- At the 75th percentile XGBoost is statistically indistinguishable from HRRR on both CSI and AP: it catches 33 of
+  46 events against HRRR's 32. Logistic regression and the GRU are slightly behind.
+- At the 90th percentile HRRR's lead was clearer (AP 0.54 vs 0.33–0.43).
+- So **HRRR's advantage is concentrated in the most extreme storms.** For moderate-to-heavy rain, a model using
+  only cheap station data comes close to NOAA's operational model.
+- The models were not re-tuned at the 75th percentile, so these numbers are, if anything, slightly conservative.
+
 ## Status
 
 - All data files are rebuilt for v2.
