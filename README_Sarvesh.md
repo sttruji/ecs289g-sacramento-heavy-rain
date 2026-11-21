@@ -132,19 +132,9 @@ counterpart:
 | KSAC dew point | +0.081 | **+0.105** |
 | KSAC rain | +0.151 | **+0.161** |
 
-**First model check (validation only, test not touched).** We trained default models with and without these
-columns. Each cutoff was tuned on validation.
-
-| Model | Daily only | + late evening |
-|---|---|---|
-| Logistic regression, 1 day of history | 0.271 | **0.288** |
-| Logistic regression, 5 days of history | 0.182 | **0.193** |
-| GRU (default settings) | **0.309** | 0.244 |
-
-Persistence scores CSI 0.033 and climatology 0.062 on the same 1,057 validation days. With 31 validation events
-and a single seed for the GRU, **these differences are within noise**. The features are physically motivated and
-carry a stronger signal, but whether the models make use of them still needs proper evaluation: several seeds,
-cross-validation over winters, and feature selection. That is the next step.
+**Model check.** On the single validation set (31 events) the result looked mixed: logistic regression improved
+slightly and the GRU got worse. The cross-validated comparison below settles it: the late-evening features are
+the largest and clearest gain of the three changes, for every model tested.
 
 ## Split
 
@@ -154,6 +144,88 @@ test winters are therefore the same ones the team has been using. The proportion
 The test winters are unchanged, but their *days* and *labels* are not: Nov/Mar days were added, the threshold
 moved, and the rain source changed. **Scores on `main`'s leaderboard are not directly comparable with scores from
 this branch.**
+
+## Cross-validation instead of one validation set (`crossval.py`)
+
+**Why.** `main` uses the 7 validation winters for three things at once: picking hyperparameters, tuning each
+model's cutoff, and early stopping. Before this branch that meant 22 events (31 now), so model rankings there were
+mostly noise. For example, the GRU's response to the late-evening features *reversed* between the single
+validation set and cross-validation.
+
+**How it works.** Each of the 46 train+val winters takes a turn as the held-out winter (leave-one-winter-out). The
+model is fit on the other 45 and predicts the held-out one. The pooled predictions score every model on all 175
+heavy days. **The test winters are never used.**
+
+- **Main metric: average precision (AP).** AP is the area under the precision-recall curve. It doesn't depend on a
+  cutoff and suits rare events: guessing at random scores about 0.025.
+- **Also reported:** ROC-AUC, Brier score, and CSI at the single best cutoff. That CSI is slightly optimistic, but
+  it uses the same rule for every model, so comparisons stay fair.
+- **Uncertainty:** 90% intervals come from a bootstrap that resamples whole winters.
+- **Neural models:** they early-stop on the 5 most recent *training* winters of each fold (never the held-out one),
+  and their scores are averaged over several seeds.
+
+Results on the v2 table (`results/cv/summary.csv`):
+
+| Model | AP [90% CI] | ROC-AUC | CSI (best cutoff) |
+|---|---|---|---|
+| Persistence | — | — | 0.055 |
+| Climatology | 0.029 [0.023, 0.036] | 0.572 | 0.033 |
+| Logistic regression | 0.188 [0.150, 0.241] | 0.869 | 0.156 |
+| XGBoost | 0.201 [0.161, 0.251] | 0.898 | 0.165 |
+| GRU (5 seeds) | 0.211 [0.165, 0.274] | 0.911 | 0.170 |
+
+All three ML models are far above persistence and climatology, and **their intervals overlap almost entirely**, so
+none is clearly the best yet. The GRU's Brier score (0.126) is poor because its class-weighted loss inflates its
+probabilities. It ranks days well but would need calibrating before its probabilities could be used as
+probabilities.
+
+## Is v2 better than `main`? (`crossval_ablation.py`)
+
+`main`'s scores and this branch's can't be compared directly, because they use different days, labels and
+threshold. So this script builds every version of the data:
+
+| Version | What it adds |
+|---|---|
+| A | `main` as committed |
+| B | Nov–Mar season |
+| C | GHCN-Daily rain |
+| D | Late-evening features |
+
+Each version trains on its own table and its own labels, exactly as its pipeline would. All versions are then
+scored on **the same days against the same truth**: the GHCN-Daily rain total at or above 23.4 mm. Scoring uses
+leave-one-winter-out over train+val, and the test winters are never used.
+
+**E1: the Dec–Feb days every version can forecast** (3,527 days, 97 heavy). AP, with the change vs A and its 90% CI:
+
+| Version | Logistic regression | XGBoost | GRU (3 seeds) |
+|---|---|---|---|
+| A `main` | 0.149 | 0.153 | 0.123 |
+| B + Nov–Mar | 0.142 (−0.006 [−0.027, +0.012]) | 0.132 (−0.021 [−0.056, +0.014]) | 0.148 (+0.025 [+0.002, +0.061]) |
+| C + GHCN-Daily | 0.155 (+0.007 [−0.021, +0.035]) | 0.161 (+0.008 [−0.030, +0.054]) | 0.158 (+0.035 [+0.016, +0.060]) |
+| **D + late evening** | **0.210 (+0.061 [+0.026, +0.101])** | **0.214 (+0.061 [+0.010, +0.123])** | **0.192 (+0.069 [+0.038, +0.106])** |
+
+ROC-AUC rises at every step for every model: from 0.82–0.86 for A to 0.88–0.92 for D.
+
+**E2: all Nov–Mar days, versions B–D** (6,100 days, 139 heavy). Adding the late-evening features to version C
+raises AP by **+0.046 (logistic regression), +0.063 (XGBoost) and +0.038 (GRU)**, and all three intervals
+exclude zero.
+
+**What this shows.**
+1. **v2 is better than `main`.** For every model, the full v2 table (D) beats `main` (A) on `main`'s own Dec–Feb
+   days, with intervals that exclude zero. AP rises by about 40% (0.15 → 0.21).
+2. **Most of the gain comes from the late-evening features.** This was the change the single validation set had
+   made look harmful for the GRU.
+3. **Nov–Mar and GHCN-Daily do not change skill on Dec–Feb days by themselves**, except for a small, consistent
+   gain for the GRU. Their value is different:
+   - They make the evaluation itself reliable: 175 events instead of 94 in train+val, and 20 instead of 12 in test.
+   - They correct about 1 in 6 heavy-day labels (30 of the ~177 heavy days on which the two rain sources disagree).
+   - They let the model forecast November and March.
+
+## Fix: XGBoost crashed on macOS
+
+On this Mac, `train.py --models xgboost` crashed with a segmentation fault (exit 139). PyTorch loads its own copy of
+the OpenMP library (`libomp`), and fitting XGBoost afterwards, with Homebrew's copy, crashes the process.
+`models/__init__.py` now imports XGBoost before the PyTorch models, and both train normally.
 
 ## Status and what is stale
 
@@ -171,6 +243,8 @@ this branch.**
 .venv/bin/python scripts/hrrr_downloader.py      # HRRR, adds Nov/Mar days -> data/hrrr_daily.csv
 .venv/bin/python scripts/data_preprocess.py      # clean table + split
 .venv/bin/python scripts/data_report.py          # coverage + risk check (run from scripts/ or repo root)
+.venv/bin/python crossval.py                     # leave-one-winter-out scores -> results/cv/summary.csv (~5 min)
+.venv/bin/python crossval_ablation.py --models logistic_regression xgboost gru --seeds 3   # -> results/cv/ablation.csv (~15 min)
 ```
 
 On macOS, XGBoost needs OpenMP: `brew install libomp`.

@@ -1,0 +1,29 @@
+eval,version,model,csi_best,ap,brier,roc_auc,cutoff,ap_ci90,csi_best_ci90,ap_diff,ap_diff_ci90
+"E1 Dec-Feb, all versions",A main,persistence,0.0339,,,,,,,,
+"E1 Dec-Feb, all versions",B + Nov-Mar,persistence,0.0471,,,,,,,,
+"E1 Dec-Feb, all versions",C + GHCN-Daily,persistence,0.0459,,,,,,,,
+"E1 Dec-Feb, all versions",D + late-evening,persistence,0.0459,,,,,,,,
+"E1 Dec-Feb, all versions",A main,logistic_regression,0.15,0.1486,0.0266,0.8233,0.1235,"[0.1223, 0.1952]","[0.1129, 0.1855]",,
+"E1 Dec-Feb, all versions",B + Nov-Mar,logistic_regression,0.1423,0.1424,0.0268,0.8474,0.1037,"[0.1133, 0.1873]","[0.1099, 0.1752]",-0.0062,"[-0.0273, 0.0116]"
+"E1 Dec-Feb, all versions",C + GHCN-Daily,logistic_regression,0.1429,0.1552,0.0259,0.8695,0.0874,"[0.1191, 0.2096]","[0.1133, 0.1725]",0.0066,"[-0.021, 0.0348]"
+"E1 Dec-Feb, all versions",D + late-evening,logistic_regression,0.1694,0.2101,0.0254,0.8785,0.0701,"[0.1635, 0.2732]","[0.1388, 0.1972]",0.0615,"[0.0262, 0.1011]"
+"E1 Dec-Feb, all versions",A main,xgboost,0.1201,0.1528,0.0256,0.8499,0.0523,"[0.1084, 0.2122]","[0.0897, 0.1491]",,
+"E1 Dec-Feb, all versions",B + Nov-Mar,xgboost,0.1124,0.1322,0.0258,0.8653,0.0337,"[0.0946, 0.1838]","[0.0888, 0.1358]",-0.0205,"[-0.0558, 0.0137]"
+"E1 Dec-Feb, all versions",C + GHCN-Daily,xgboost,0.1596,0.1612,0.025,0.89,0.0825,"[0.1233, 0.2183]","[0.1241, 0.1955]",0.0084,"[-0.0304, 0.0535]"
+"E1 Dec-Feb, all versions",D + late-evening,xgboost,0.1622,0.2142,0.0242,0.9134,0.0917,"[0.1673, 0.2801]","[0.1282, 0.1962]",0.0614,"[0.0103, 0.123]"
+"E1 Dec-Feb, all versions",A main,gru,0.1315,0.1235,0.1557,0.8612,0.8294,"[0.1002, 0.1625]","[0.1012, 0.1641]",,
+"E1 Dec-Feb, all versions",B + Nov-Mar,gru,0.1407,0.1482,0.1504,0.8837,0.8541,"[0.1177, 0.2046]","[0.107, 0.1742]",0.0247,"[0.0019, 0.0613]"
+"E1 Dec-Feb, all versions",C + GHCN-Daily,gru,0.1442,0.1585,0.146,0.8931,0.9098,"[0.129, 0.2065]","[0.1135, 0.1739]",0.035,"[0.0164, 0.0598]"
+"E1 Dec-Feb, all versions",D + late-evening,gru,0.1774,0.1922,0.1325,0.9175,0.903,"[0.1576, 0.2443]","[0.1429, 0.2123]",0.0687,"[0.0384, 0.1058]"
+"E2 Nov-Mar, B-D",B + Nov-Mar,persistence,0.0414,,,,,,,,
+"E2 Nov-Mar, B-D",C + GHCN-Daily,persistence,0.0409,,,,,,,,
+"E2 Nov-Mar, B-D",D + late-evening,persistence,0.0409,,,,,,,,
+"E2 Nov-Mar, B-D",B + Nov-Mar,logistic_regression,0.1211,0.1146,0.023,0.8372,0.1001,"[0.0935, 0.1473]","[0.0956, 0.1459]",,
+"E2 Nov-Mar, B-D",C + GHCN-Daily,logistic_regression,0.1211,0.1212,0.0224,0.8538,0.0874,"[0.0968, 0.1579]","[0.0983, 0.1461]",0.0067,"[-0.0081, 0.0232]"
+"E2 Nov-Mar, B-D",D + late-evening,logistic_regression,0.1442,0.1605,0.0223,0.8617,0.0743,"[0.125, 0.2107]","[0.1212, 0.1681]",0.0459,"[0.023, 0.0755]"
+"E2 Nov-Mar, B-D",B + Nov-Mar,xgboost,0.0974,0.1083,0.0217,0.8599,0.0376,"[0.0832, 0.1461]","[0.0803, 0.1149]",,
+"E2 Nov-Mar, B-D",C + GHCN-Daily,xgboost,0.1265,0.1267,0.0213,0.8736,0.0825,"[0.0978, 0.1642]","[0.1005, 0.1501]",0.0184,"[-0.0032, 0.044]"
+"E2 Nov-Mar, B-D",D + late-evening,xgboost,0.1452,0.1712,0.0207,0.8906,0.0596,"[0.1343, 0.2217]","[0.1181, 0.1718]",0.0629,"[0.0338, 0.1019]"
+"E2 Nov-Mar, B-D",B + Nov-Mar,gru,0.1152,0.1263,0.1402,0.8773,0.844,"[0.1006, 0.1682]","[0.093, 0.1365]",,
+"E2 Nov-Mar, B-D",C + GHCN-Daily,gru,0.1266,0.1384,0.1355,0.8874,0.9097,"[0.1091, 0.1825]","[0.0984, 0.1538]",0.0121,"[-0.0088, 0.0374]"
+"E2 Nov-Mar, B-D",D + late-evening,gru,0.1537,0.1646,0.1228,0.9075,0.8745,"[0.1335, 0.2117]","[0.1268, 0.1809]",0.0383,"[0.0089, 0.0727]"

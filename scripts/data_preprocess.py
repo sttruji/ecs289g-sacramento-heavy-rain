@@ -125,8 +125,11 @@ def late_evening(df: pd.DataFrame) -> pd.DataFrame:
     })
 
 
-def daily_station(icao: str, ghcnd: pd.DataFrame) -> pd.DataFrame:
-    """Daily and late-evening values for one station on season days, blank where incomplete."""
+def daily_station(icao: str, ghcnd: pd.DataFrame | None, months: list[int] = SEASON_MONTHS) -> pd.DataFrame:
+    """Daily and late-evening values for one station on season days, blank where incomplete.
+
+    ghcnd=None uses only the hourly reports for rain (the original pipeline's source).
+    """
     df = load_hourly(icao)
     df.index = df.index - DAY_SHIFT
     g = df.groupby(df.index.normalize().rename("date"))
@@ -146,7 +149,7 @@ def daily_station(icao: str, ghcnd: pd.DataFrame) -> pd.DataFrame:
     }).join(late_evening(df))
 
     # Official daily totals first; the hourly sum only where GHCN-Daily has none
-    official = ghcnd[icao].reindex(daily.index.union(ghcnd.index)) if icao in ghcnd else None
+    official = ghcnd[icao].reindex(daily.index.union(ghcnd.index)) if ghcnd is not None and icao in ghcnd else None
     if official is not None:
         daily = daily.reindex(official.index)
         daily["prcp_source"] = np.where(official.notna(), "ghcnd", np.where(daily["prcp"].notna(), "hourly", None))
@@ -154,7 +157,7 @@ def daily_station(icao: str, ghcnd: pd.DataFrame) -> pd.DataFrame:
     else:
         daily["prcp_source"] = np.where(daily["prcp"].notna(), "hourly", None)
 
-    daily = daily[daily.index.month.isin(SEASON_MONTHS)]
+    daily = daily[daily.index.month.isin(months)]
     source = daily.pop("prcp_source")
     out = daily.round(2).add_prefix(f"{icao}_")
     if icao == TARGET:
@@ -162,10 +165,16 @@ def daily_station(icao: str, ghcnd: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def build_daily(stations: list[str] = STATIONS, optional: list[str] = OPTIONAL_STATIONS) -> pd.DataFrame:
-    """Season days where the target's rain is known and the other required stations are complete."""
-    ghcnd = pd.read_csv(GHCND_PATH, parse_dates=["date"], index_col="date")
-    df = pd.concat([daily_station(icao, ghcnd) for icao in stations + optional], axis=1)
+def build_daily(stations: list[str] = STATIONS, optional: list[str] = OPTIONAL_STATIONS,
+                months: list[int] = SEASON_MONTHS, use_ghcnd: bool = True,
+                min_winter_days: int = MIN_WINTER_DAYS) -> pd.DataFrame:
+    """Season days where the target's rain is known and the other required stations are complete.
+
+    months, use_ghcnd and min_winter_days exist so crossval_ablation.py can rebuild
+    the table without each change (e.g. Dec-Feb, hourly rain only).
+    """
+    ghcnd = pd.read_csv(GHCND_PATH, parse_dates=["date"], index_col="date") if use_ghcnd else None
+    df = pd.concat([daily_station(icao, ghcnd, months) for icao in stations + optional], axis=1)
     keep = df[f"{TARGET}_prcp"].notna()
     for icao in stations:
         if icao != TARGET:
@@ -173,7 +182,7 @@ def build_daily(stations: list[str] = STATIONS, optional: list[str] = OPTIONAL_S
     df = df[keep].sort_index()
     df.insert(0, "winter", winter_of(df.index))
     days = df.groupby("winter").size()
-    return df[df["winter"].isin(days.index[days >= MIN_WINTER_DAYS])]
+    return df[df["winter"].isin(days.index[days >= min_winter_days])]
 
 
 def split_winters(winters) -> dict[str, list[int]]:
