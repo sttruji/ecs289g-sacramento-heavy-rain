@@ -2,7 +2,7 @@
 Climatology baseline: forecast what is typical for this point in the winter.
 
 fit() learns, from the training winters, the average 24-hour rain total and the
-heavy-rain frequency for each day of the season (days since Dec 1), smoothed
+heavy-rain frequency for each day of the season (days since Nov 1), smoothed
 with a centered WINDOW_DAYS rolling mean. predict() returns the average rain,
 predict_proba() the heavy-rain frequency, and predict_heavy() flags days whose
 frequency is at or above the cutoff. By default the cutoff is the overall
@@ -20,14 +20,14 @@ import pandas as pd
 
 WEIGHTS_DIR = Path(__file__).resolve().parent.parent / "weights"
 
-SEASON_DAYS = 91  # Dec 1 (day 0) through Feb 29 (day 90)
+SEASON_DAYS = 152  # Nov 1 (day 0) through Mar 31 (day 150, or 151 in a leap year)
 WINDOW_DAYS = 31
 
 
 def season_day(dates: pd.DatetimeIndex) -> pd.Index:
-    """Days since Dec 1 of each date's winter."""
-    dec1 = pd.to_datetime(pd.DataFrame({"year": dates.year - (dates.month <= 2), "month": 12, "day": 1}))
-    return pd.Index((dates - pd.DatetimeIndex(dec1)).days)
+    """Days since Nov 1 of each date's winter."""
+    nov1 = pd.to_datetime(pd.DataFrame({"year": dates.year - (dates.month < 11), "month": 11, "day": 1}))
+    return pd.Index((dates - pd.DatetimeIndex(nov1)).days)
 
 
 class Climatology:

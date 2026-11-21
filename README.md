@@ -25,6 +25,7 @@ weather-station data, and test whether a lightweight ML model beats persistence 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python scripts/dataset_downloader.py  # raw hourly station data -> data/raw_data/ (gitignored)
+.venv/bin/python scripts/ghcnd_downloader.py    # official daily rain totals -> data/ghcnd_daily.csv (see README_Sarvesh.md)
 .venv/bin/python scripts/data_report.py         # coverage + heavy-rain risk check
 .venv/bin/python scripts/data_preprocess.py     # clean daily table + train/val/test split
 .venv/bin/python scripts/hrrr_downloader.py     # HRRR forecasts (already in data/hrrr_daily.csv)

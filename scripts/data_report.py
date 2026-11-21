@@ -2,7 +2,7 @@
 Report data coverage and the plan's heavy-rain risk check.
 
 Reads data/raw_data/ (run dataset_downloader.py first) and prints:
-    1. Hourly coverage per station: % of Dec-Feb hours with each plan variable
+    1. Hourly coverage per station: % of season (Nov-Mar) hours with each plan variable
     2. Usable days per station under the preprocessing completeness rule
     3. The clean table and its chronological split (data_preprocess.py settings)
     4. Risk check: heavy-rain days per winter at the 90th and 75th percentiles
@@ -24,19 +24,20 @@ MIN_HEAVY_PER_WINTER = 3
 
 
 def winter_days(winter: int) -> int:
-    return (datetime(winter + 1, 3, 1) - datetime(winter, 12, 1)).days
+    return (datetime(winter + 1, 4, 1) - datetime(winter, dp.SEASON_START_MONTH, 1)).days
 
 
 def station_coverage(icao: str, winters: range) -> dict:
     df = dp.load_hourly(icao)
-    df = df[df.index.month.isin([12, 1, 2])]
+    df = df[(df.index - dp.DAY_SHIFT).month.isin(dp.SEASON_MONTHS)]
     hours = 24 * sum(winter_days(w) for w in winters)
 
     row = {v: round(100 * df[v].notna().sum() / hours, 1) for v in VARIABLES}
     row["trace_hours"] = int(df["prcp_trace"].sum())
 
-    usable = dp.daily_station(icao)
-    usable_winters = usable.groupby(usable.index.year - (usable.index.month <= 2)).size()
+    daily = dp.daily_station(icao, pd.read_csv(dp.GHCND_PATH, parse_dates=["date"], index_col="date"))
+    usable = daily[daily[[f"{icao}_{v}" for v in dp.DAILY_VARIABLES]].notna().all(axis=1)]
+    usable_winters = usable.groupby(dp.winter_of(usable.index)).size()
     row["usable_days_%"] = round(100 * len(usable) / (hours / 24), 1)
     row["usable_winters"] = int((usable_winters >= dp.MIN_WINTER_DAYS).sum())
     return row
@@ -51,8 +52,8 @@ def main() -> None:
     winters = range(stations["first_winter"].min(), stations["last_winter"].max() + 1)
 
     print(f"== 1-2. Coverage per station, winters {winters[0]}-{winters[-1]} ({len(winters)}) ==")
-    print("Variables: % of Dec-Feb hours with a value (trace rain counts as a value, calm wind as 0).")
-    print(f"Usable day: every variable has >= {dp.MIN_HOURS}/24 hours. "
+    print("Variables: % of Nov-Mar hours with a value (trace rain counts as a value, calm wind as 0).")
+    print(f"Usable day: every hourly variable has >= {dp.MIN_HOURS}/24 hours (rain may come from GHCN-Daily). "
           f"Usable winter: >= {dp.MIN_WINTER_DAYS} usable days.\n")
     coverage = pd.DataFrame.from_dict({icao: station_coverage(icao, winters) for icao in stations["icao"]}, orient="index")
     print(coverage.to_string())
@@ -62,7 +63,7 @@ def main() -> None:
     dropped = sorted(set(winters) - set(df["winter"]))
     print(f"\n== 3. Clean table: stations {', '.join(dp.STATIONS)}, optional {', '.join(dp.OPTIONAL_STATIONS)} ==")
     print(f"{len(df):,} days in {df['winter'].nunique()} winters. Dropped winters: {dropped}")
-    print("Optional stations, % of days complete: "
+    print("Optional stations, % of days with a rain total: "
           + ", ".join(f"{icao} {df[f'{icao}_prcp'].notna().mean():.0%}" for icao in dp.OPTIONAL_STATIONS))
     for name, ws in splits.items():
         print(f"  {name:5s} {ws[0]}-{ws[-1]} ({len(ws)} winters, {df['winter'].isin(ws).sum():,} days)")

@@ -10,9 +10,9 @@ The files are read directly instead of through meteostat.hourly(), which drops
 any value that is empty but has a source. Meteostat stores NOAA trace rainfall
 (< 0.1 mm) exactly that way, so prcp empty + prcp_source set means trace.
 
-Each winter is labelled by the year of its December (winter=2016 is Dec 2016 -
-Feb 2017) and padded with LOOKBACK_DAYS before Dec 1 (history for the lookback
-features) and all of Mar 1 (so a Pacific-time day window on the last day of Feb
+Each winter is labelled by the year of its December (winter=2016 is Nov 2016 -
+Mar 2017) and padded with LOOKBACK_DAYS before Nov 1 (history for the lookback
+features) and all of Apr 1 (so a Pacific-time day window on the last day of Mar
 is complete). Timestamps are UTC. Units: degC, %, mm, hPa, degrees, km/h.
 
 Meteostat's hourly product carries relative humidity but not dew point, so dwpt
@@ -52,6 +52,10 @@ OBSERVATION_SOURCES = {"isd_lite", "ghcnh", "metar"}
 # First winter with hourly records (Eureka's Meteostat record only starts in 2005)
 FIRST_WINTER = 1973
 LOOKBACK_DAYS = 5
+
+# Season: Nov 1 - Mar 31 (keep in sync with data_preprocess.SEASON_MONTHS)
+SEASON_START = (11, 1)  # month, day in the winter's first year
+SEASON_END = (4, 1)     # first day after the season, in the following year
 
 OUT_DIR = Path(__file__).resolve().parent.parent / "data" / "raw_data"
 
@@ -96,8 +100,8 @@ def download_station(station_id: str, first_winter: int, last_winter: int) -> pd
 
     winters = []
     for winter in range(first_winter, last_winter + 1):
-        start = datetime(winter, 12, 1) - timedelta(days=LOOKBACK_DAYS)
-        end = datetime(winter + 1, 3, 1, 23)
+        start = datetime(winter, *SEASON_START) - timedelta(days=LOOKBACK_DAYS)
+        end = datetime(winter + 1, *SEASON_END, 23)
         chunk = obs.loc[start:end]
         if not chunk.empty:
             winters.append(chunk.assign(winter=winter))

@@ -1,13 +1,15 @@
 """
 Download HRRR 24-hour rain forecasts for Sacramento Executive (KSAC).
 
-For each Dec-Feb day D (Pacific Standard Time midnight to midnight, i.e. 08 UTC
+For each Nov-Mar day D (Pacific Standard Time midnight to midnight, i.e. 08 UTC
 to 08 UTC) this takes the 06 UTC HRRR run on D, issued just before the day
 starts, and computes the forecast total APCP(0-26 h) - APCP(0-2 h) at the grid
 point nearest KSAC. 26-hour forecasts only exist since HRRRv3 (July 2018), so
 the first winter is 2018. Writes data/hrrr_daily.csv.
 
 Fetches two ~1 MB GRIB2 fields per day from NOAA's AWS archive via Herbie.
+Days already in data/hrrr_daily.csv with a forecast are kept, not fetched again
+(so widening the season to Nov-Mar only downloads the new months).
 
 Usage:
     python scripts/hrrr_downloader.py
@@ -57,7 +59,7 @@ def forecast_day(day: pd.Timestamp) -> float:
 
 
 def winter_days(winter: int) -> pd.DatetimeIndex:
-    return pd.date_range(f"{winter}-12-01", f"{winter + 1}-03-01", inclusive="left", name="date")
+    return pd.date_range(f"{winter}-11-01", f"{winter + 1}-04-01", inclusive="left", name="date")
 
 
 def main() -> None:
@@ -66,15 +68,20 @@ def main() -> None:
     parser.add_argument("--end-year", type=int, default=last_complete_winter(date.today()), help="last winter (December year)")
     args = parser.parse_args()
 
-    frames = []
+    known = pd.Series(dtype=float)
+    if OUT_PATH.exists():
+        known = pd.read_csv(OUT_PATH, parse_dates=["date"], index_col="date")["hrrr_prcp"].dropna()
+
+    frames = [known.to_frame().assign(winter=known.index.year - (known.index.month < 11))] if len(known) else []
     with ProcessPoolExecutor(WORKERS) as pool:
         for winter in range(args.start_year, args.end_year + 1):
-            days = winter_days(winter)
+            days = winter_days(winter).difference(known.index)
             prcp = list(pool.map(forecast_day, days))
-            frames.append(pd.DataFrame({"winter": winter, "hrrr_prcp": prcp}, index=days))
-            print(f"winter {winter}: {np.isfinite(prcp).sum()}/{len(days)} days", flush=True)
+            frames.append(pd.DataFrame({"winter": winter, "hrrr_prcp": prcp}, index=days.rename("date")))
+            print(f"winter {winter}: {np.isfinite(prcp).sum()}/{len(days)} new days", flush=True)
 
-    out = pd.concat(frames)
+    out = pd.concat(frames)[["winter", "hrrr_prcp"]].sort_index()
+    out = out[~out.index.duplicated(keep="first")]
     out.to_csv(OUT_PATH)
     print(f"{out['hrrr_prcp'].notna().sum():,}/{len(out):,} days -> {OUT_PATH.relative_to(OUT_PATH.parent.parent)}")
 

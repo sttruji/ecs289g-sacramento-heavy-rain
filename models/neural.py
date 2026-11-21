@@ -4,7 +4,7 @@ Shared data preparation and training for the PyTorch models (models/gru.py, mode
 Each day's input is the previous `lags` days of every chosen station's daily
 variables, shaped (stations, lags, variables) with the oldest day first. Each
 station-variable is standardized with its training mean and spread. Missing
-values (a dropped day, early December, an optional station's gap) become 0,
+values (a dropped day, early November, an optional station's gap) become 0,
 the training mean, and a station with nothing in the whole window is marked
 absent.
 

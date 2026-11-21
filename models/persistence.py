@@ -3,7 +3,7 @@ Persistence baseline: the next 24 hours look like the last 24 hours.
 
 The forecast for day D is what was observed on day D-1 at the target station:
 its rain total for the 24-hour rainfall output and its heavy_rain flag for the
-event output. Days whose previous day is not in the data (Dec 1, or the day
+event output. Days whose previous day is not in the data (Nov 1, or the day
 after a dropped day) get NaN.
 
 Expects the clean daily table indexed by date, e.g.
