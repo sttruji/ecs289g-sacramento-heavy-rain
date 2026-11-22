@@ -2,11 +2,38 @@
 
 Branch `Sarvesh` · Sarvesh Halbe
 
-This branch changes the **data**, not the models. It makes three changes to the shared daily table, and each one
-answers a weakness found while reviewing the original pipeline. The sections below give the reason, the evidence,
-what changed, and the caveats for each.
+This branch makes three changes to the shared daily table, and each one answers a weakness found while reviewing
+the original pipeline. It then re-evaluates the models on the new table: leave-one-winter-out cross-validation, CV
+tuning, a final fit on train+val, a single scoring of the test winters, and a sensitivity check at a lower
+threshold. The sections below give the reason, the evidence, what changed, and the caveats for each.
 
-## Summary
+## Key findings (for the report)
+
+1. **Station-only ML clearly beats persistence.** On the test winters, every model gains +0.20 to +0.27 CSI over
+   persistence, and every interval excludes zero. This answers the project's main question.
+2. **The biggest single gain is the late-evening (last 6 h) features**, not model choice. They add about +0.06 AP at
+   the 90th percentile and +0.06 to +0.09 at the 75th, with intervals that exclude zero. The Nov–Mar season and the
+   GHCN-Daily totals add events and fix the labels, but alone they are roughly neutral for skill.
+3. **Logistic regression, XGBoost and the GRU are statistically tied** in cross-validation at both thresholds. They
+   all choose 1 day of history.
+4. **HRRR is still better for the heaviest storms.** At ≥ 23.4 mm (90th percentile, 20 test events), HRRR scores CSI
+   0.32 / AP 0.54, against 0.20–0.27 / 0.33–0.43 for our models.
+5. **For moderate-to-heavy rain the gap almost closes.** At ≥ 14.2 mm (75th percentile, 46 test events), the best
+   station model (XGBoost) scores CSI 0.37 / AP 0.52 against HRRR's 0.40 / 0.53. The difference is −0.024
+   [−0.093, +0.048], so it is not significant. The other two models are slightly but significantly behind.
+
+**Suggested wording:** *"Using only hourly observations from five airport stations, ML models come close to NOAA's
+HRRR for moderate-to-heavy rain (≥ 14 mm), but HRRR remains clearly better for the most extreme storms
+(≥ 23 mm). Recent late-evening observations matter more than the choice of model."*
+
+**Caveats to state alongside these:**
+- The test set is small (20 or 46 events), so one hit moves CSI by about 0.02–0.03.
+- "Close to HRRR" refers to the best of three CV-tied models, so report all three.
+- The models were tuned at the 90th percentile and not re-tuned for the 75th.
+- Model choice was made by cross-validation before the test winters were scored. Don't re-rank models from the
+  test table.
+
+## Data summary
 
 | | `main` (Dec–Feb, hourly rain) | This branch |
 |---|---|---|
@@ -269,8 +296,9 @@ C = 1 by only 0.002 AP.
    complete data, than the 1970s–2010s average. This is one reason to report CV and test together.
 4. **Don't pick models from the test table.** Among all retrained models, the val-tuned VAE scores 0.288 and the
    default VAE 0.294 on test, above the CV models. But 20 events can't rank models: one more hit moves CSI by about
-   0.03. Model choice was made by cross-validation before test was run, and that choice should stand.
-   **Recommended for the report: the GRU (CV), with logistic regression (CV) as the simple, interpretable baseline.**
+   0.03. The same applies within the CV models: the GRU's higher test score is not evidence that it is better,
+   because the three were tied in CV. **Recommended for the report: present all three CV models as tied, with
+   logistic regression as the simple, interpretable baseline.**
 
 ## Sensitivity check: 75th-percentile threshold (`sensitivity.py`, `crossval_ablation.py --percentile 75`)
 
@@ -316,7 +344,8 @@ with intervals that exclude zero. Nov–Mar and GHCN alone are roughly neutral, 
 
 **What this adds.**
 - At the 75th percentile XGBoost is statistically indistinguishable from HRRR on both CSI and AP: it catches 33 of
-  46 events against HRRR's 32. Logistic regression and the GRU are slightly behind.
+  46 events against HRRR's 32, with 8 more false alarms. Logistic regression and the GRU are slightly behind.
+  XGBoost was not chosen in advance (all three are tied in CV), so the claim is about the best of the three.
 - At the 90th percentile HRRR's lead was clearer (AP 0.54 vs 0.33–0.43).
 - So **HRRR's advantage is concentrated in the most extreme storms.** For moderate-to-heavy rain, a model using
   only cheap station data comes close to NOAA's operational model.
