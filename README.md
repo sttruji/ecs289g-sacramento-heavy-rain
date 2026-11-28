@@ -2,6 +2,11 @@
 
 ECS 289G · Group 5 — Lucas Hornung, Sarvesh Halbe, Steven Trujillo, Vikhas Somasundaram Giri, Willian Klippel-Huber
 
+> **Branch `Sarvesh`:** what changed compared to `main`, and why, is in **[README_Sarvesh.md](README_Sarvesh.md)**.
+> It covers the Nov–Mar season, GHCN-Daily rain totals, late-evening features, cross-validation, the
+> main-vs-v2 ablation, all models retrained and tested once against HRRR, and a 75th-percentile sensitivity check.
+> It opens with the key findings for the report.
+
 **Due:** 4-page report and recorded presentation Mon Nov 30. Live presentations Dec 1 and 3.
 
 ## Goal
